@@ -4,6 +4,7 @@ module my_first_package::example;
 // use sui::object::{Self, UID};
 // use sui::transfer;
 // use sui::tx_context::{Self, TxContext};
+use std::debug;
 
 public struct Sword has key, store {
     id: UID,
@@ -50,7 +51,10 @@ public fun sword_create(magic: u64, strength: u64, ctx: &mut TxContext): Sword {
 }
 
 public fun new_sword(forge: &mut Forge, magic: u64, strength: u64, ctx: &mut TxContext): Sword {
+    debug::print(forge);
     forge.swords_created = forge.swords_created + 1;
+    debug::print(forge);
+    debug::print_stack_trace();
     Sword {
         id: object::new(ctx),
         magic: magic,
