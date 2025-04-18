@@ -43,6 +43,7 @@ const mintNFTMethod = async (
   const sender = walletClient.getAddress();
   tx.setSender(sender);
   tx.moveCall({
+    // WARN: replace first pawmise with contract address
     target: "pawmise::pawmise::mint",
     arguments: [
       tx.object(counterObjectId),
