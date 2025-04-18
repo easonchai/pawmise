@@ -1,0 +1,12 @@
+[package]
+name = "pawmise"
+edition = "2024.beta"
+
+[dependencies]
+
+[addresses]
+pawmise = "0x0"
+
+[dev-dependencies]
+
+[dev-addresses]
