@@ -7,7 +7,7 @@ const viewBalanceParametersSchema = z.object({
     formatted: z.boolean().optional().describe("Whether to return a human-readable format")
 });
 
-export class BalanceViewerPlugin extends PluginBase<SuiWalletClient> {
+class BalanceViewerPlugin extends PluginBase<SuiWalletClient> {
     constructor() {
         super("balanceViewer", []);
     }
@@ -24,12 +24,12 @@ export class BalanceViewerPlugin extends PluginBase<SuiWalletClient> {
             async (parameters) => {
                 const address = parameters.address || walletClient.getAddress();
                 const balance = await walletClient.balanceOf(address);
-                
+
                 if (parameters.formatted) {
                     const formattedAmount = (Number(balance.value) / 10**balance.decimals).toFixed(4);
                     return `${formattedAmount} ${balance.symbol}`;
                 }
-                
+
                 return balance;
             },
         );

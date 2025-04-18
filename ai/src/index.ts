@@ -12,8 +12,8 @@ import { SuiKeyPairWalletClient } from "@goat-sdk/wallet-sui";
 import { getOnChainTools } from "@goat-sdk/adapter-vercel-ai";
 
 import * as dotenv from "dotenv";
-import { BalanceViewerPlugin, myPlugin } from "./plugins/checkSUIBalance.plugin";
-import { ViewSUIBalancePlugin } from "./plugins/viewBalance.plugin";
+import { myPlugin } from "./plugins/checkSUIBalance.plugin";
+
 dotenv.config();
 
 // Step 1: Initialize Sui client and wallet
@@ -23,6 +23,10 @@ const suiClient = new SuiClient({
 
 // Create or import a keypair (this example uses a private key)
 const bech32PrivateKey = process.env.PK;
+
+if (!bech32PrivateKey) {
+  throw new Error("PK environment variable is not set");
+}
 
 const { schema, secretKey } = decodeSuiPrivateKey(bech32PrivateKey);
 
@@ -38,7 +42,7 @@ const walletClient = new SuiKeyPairWalletClient({
   // 2. Get your onchain tools for your wallet
   const tools = await getOnChainTools({
     wallet: walletClient,
-    plugins: [new SendSUIPlugin()],
+    plugins: [myPlugin()],
   });
 
   // 3. Create a readline interface to interact with the agent
