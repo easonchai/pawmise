@@ -62,6 +62,11 @@ public struct ImageUrlUpdated has copy, drop {
     updatedAt: u64,
 }
 
+public struct NFTBurned has copy, drop {
+    realm_id: u64,
+    destroyed_at: u64,
+}
+
 // === Package Functions ===
 fun init(otw: PAWMISE, ctx: &mut TxContext) {
     let counter = RealmCounter {
@@ -188,4 +193,28 @@ public fun update_image_url(
         realm_id: nft.realm_id,
         updatedAt: current_epoch,
     });
+}
+
+public entry fun burn(nft: RealmNFT, ctx: &mut TxContext) {
+    let current_epoch = tx_context::epoch(ctx);
+
+    event::emit(NFTBurned {
+        realm_id: nft.realm_id,
+        destroyed_at: current_epoch,
+    });
+
+    let RealmNFT {
+        id,
+        name: _,
+        description: _,
+        image_url: _,
+        tier: _,
+        creator: _,
+        realm_id: _,
+        created_at: _,
+        updated_at: _,
+        destroyed_at: _,
+    } = nft;
+
+    object::delete(id);
 }
