@@ -29,12 +29,12 @@ public struct RealmNFT has key, store {
     creator: address,
     realm_id: u64,
     created_at: u64,
+    updated_at: Option<u64>,
     destroyed_at: Option<u64>,
 }
 
 // === Events ===
 public struct NFTMinted has copy, drop {
-    object_id: ID,
     name: string::String,
     description: string::String,
     image_url: string::String,
@@ -42,6 +42,12 @@ public struct NFTMinted has copy, drop {
     creator: address,
     realm_id: u64,
     created_at: u64,
+}
+
+public struct TierUpgraded has copy, drop {
+    tier: u8,
+    realm_id: u64,
+    updatedAt: u64,
 }
 
 // === Package Functions ===
@@ -107,11 +113,11 @@ public fun mint(
         creator,
         realm_id,
         created_at: tx_context::epoch(ctx),
+        updated_at: option::none(),
         destroyed_at: option::none(),
     };
 
     event::emit(NFTMinted {
-        object_id: object::id(&nft),
         name: nft.name,
         description: nft.description,
         image_url: nft.image_url,
@@ -123,3 +129,18 @@ public fun mint(
 
     nft
 }
+
+public fun upgrade_tier(nft: &mut RealmNFT, ctx: &mut TxContext) {
+    assert!(nft.tier < MAX_TIER, EInvalidTier);
+    nft.tier = nft.tier + 1;
+
+    let current_epoch = tx_context::epoch(ctx);
+    nft.updated_at = option::some(current_epoch);
+
+    event::emit(TierUpgraded {
+        tier: nft.tier,
+        realm_id: nft.realm_id,
+        updatedAt: current_epoch,
+    });
+}
+
