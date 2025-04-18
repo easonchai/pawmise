@@ -50,6 +50,18 @@ public struct TierUpgraded has copy, drop {
     updatedAt: u64,
 }
 
+public struct DescriptionUpdated has copy, drop {
+    description: string::String,
+    realm_id: u64,
+    updatedAt: u64,
+}
+
+public struct ImageUrlUpdated has copy, drop {
+    image_url: string::String,
+    realm_id: u64,
+    updatedAt: u64,
+}
+
 // === Package Functions ===
 fun init(otw: PAWMISE, ctx: &mut TxContext) {
     let counter = RealmCounter {
@@ -144,3 +156,36 @@ public fun upgrade_tier(nft: &mut RealmNFT, ctx: &mut TxContext) {
     });
 }
 
+public fun update_description(
+    nft: &mut RealmNFT,
+    new_description: string::String,
+    ctx: &mut TxContext,
+) {
+    nft.description = new_description;
+
+    let current_epoch = tx_context::epoch(ctx);
+    nft.updated_at = option::some(current_epoch);
+
+    event::emit(DescriptionUpdated {
+        description: nft.description,
+        realm_id: nft.realm_id,
+        updatedAt: current_epoch,
+    });
+}
+
+public fun update_image_url(
+    nft: &mut RealmNFT,
+    new_image_url: string::String,
+    ctx: &mut TxContext,
+) {
+    nft.image_url = new_image_url;
+
+    let current_epoch = tx_context::epoch(ctx);
+    nft.updated_at = option::some(current_epoch);
+
+    event::emit(ImageUrlUpdated {
+        image_url: nft.image_url,
+        realm_id: nft.realm_id,
+        updatedAt: current_epoch,
+    });
+}
