@@ -5,7 +5,6 @@ module my_first_package::example;
 // use sui::transfer;
 // use sui::tx_context::{Self, TxContext};
 
-// Part 2: struct definitions
 public struct Sword has key, store {
     id: UID,
     magic: u64,
@@ -43,6 +42,15 @@ public fun swords_created(self: &Forge): u64 {
 
 // Part 5: Public/entry functions (introduced later in the tutorial)
 public fun sword_create(magic: u64, strength: u64, ctx: &mut TxContext): Sword {
+    Sword {
+        id: object::new(ctx),
+        magic: magic,
+        strength: strength,
+    }
+}
+
+public fun new_sword(forge: &mut Forge, magic: u64, strength: u64, ctx: &mut TxContext): Sword {
+    forge.swords_created = forge.swords_created + 1;
     Sword {
         id: object::new(ctx),
         magic: magic,
@@ -105,5 +113,42 @@ fun test_sword_transactions() {
         // Return the sword to the object pool (it cannot be simply "dropped")
         scenario.return_to_sender(sword);
     };
+    scenario.end();
+}
+
+#[test]
+fun test_module_init() {
+    use sui::test_scenario;
+
+    // Create test addresses representing users
+    let admin = @0xAD;
+    let initial_owner = @0xCAFE;
+
+    // First transaction to emulate module initialization
+    let mut scenario = test_scenario::begin(admin);
+    {
+        init(scenario.ctx());
+    };
+
+    // Second transaction to check if the forge has been created
+    // and has initial value of zero swords created
+    scenario.next_tx(admin);
+    {
+        let forge = scenario.take_from_sender<Forge>();
+        assert!(forge.swords_created() == 0, 0);
+        scenario.return_to_sender(forge);
+    };
+
+    // Third transaction executed by admin to create the sword
+    // and has new value of one sword created
+    scenario.next_tx(admin);
+    {
+        let mut forge = scenario.take_from_sender<Forge>();
+        let sword = forge.new_sword(7, 4, scenario.ctx());
+        transfer::public_transfer(sword, initial_owner);
+        assert!(forge.swords_created() == 1, 1);
+        scenario.return_to_sender(forge);
+    };
+
     scenario.end();
 }
