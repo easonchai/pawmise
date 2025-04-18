@@ -13,6 +13,7 @@ import { getOnChainTools } from "@goat-sdk/adapter-vercel-ai";
 
 import * as dotenv from "dotenv";
 import { myPlugin } from "./plugins/checkSUIBalance.plugin";
+import { viewBalance } from "plugins/viewBalance.plugin";
 
 dotenv.config();
 
@@ -42,7 +43,7 @@ const walletClient = new SuiKeyPairWalletClient({
   // 2. Get your onchain tools for your wallet
   const tools = await getOnChainTools({
     wallet: walletClient,
-    plugins: [myPlugin()],
+    plugins: [viewBalance()],
   });
 
   // 3. Create a readline interface to interact with the agent

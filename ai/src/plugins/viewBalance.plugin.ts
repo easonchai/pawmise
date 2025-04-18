@@ -10,7 +10,8 @@ const viewBalanceParametersSchema = z.object({
     .describe(
       "The address to check (defaults to current wallet if not provided)",
     ),
-  formatted: z.boolean()
+  formatted: z
+    .boolean()
     .optional()
     .describe("Whether to return a human-readable format"),
 });
@@ -35,7 +36,10 @@ export class ViewSUIBalancePlugin extends PluginBase<SuiWalletClient> {
           const balance = await walletClient.balanceOf(address);
 
           if (parameters.formatted) {
-            const formattedAmount = (Number(balance.value) / 10**balance.decimals).toFixed(4);
+            const formattedAmount = (
+              Number(balance.value) /
+              10 ** balance.decimals
+            ).toFixed(4);
             return `${formattedAmount} ${balance.symbol}`;
           }
 
