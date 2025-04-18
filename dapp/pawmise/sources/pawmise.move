@@ -239,3 +239,171 @@ public fun updated_at(nft: &RealmNFT): Option<u64> { nft.updated_at }
 public fun destroyed_at(nft: &RealmNFT): Option<u64> { nft.destroyed_at }
 
 public fun count(counter: &RealmCounter): u64 { counter.count }
+
+// === Test Functions ===
+#[test]
+fun test_mint() {
+    use sui::test_scenario;
+    
+    let admin = @0xAD;
+    let user = @0xCAFE;
+    
+    let mut scenario = test_scenario::begin(admin);
+    
+    // --- FIRST TX: Initialize the module ---
+    {
+        init(PAWMISE {}, test_scenario::ctx(&mut scenario));
+    };
+    
+    // --- SECOND TX: Mint first NFT ---
+    test_scenario::next_tx(&mut scenario, user);
+    {
+        let mut counter = test_scenario::take_shared<RealmCounter>(&scenario);
+        
+        assert!(count(&counter) == 0, 0);
+        
+        let nft = mint(
+            &mut counter,
+            string::utf8(b"Forest Realm"),
+            string::utf8(b"A magical forest"),
+            string::utf8(b"ipfs://forest.png"),
+            user,
+            test_scenario::ctx(&mut scenario)
+        );
+        
+        assert!(count(&counter) == 1, 1);
+        
+        assert!(name(&nft) == string::utf8(b"Forest Realm"), 2);
+        assert!(description(&nft) == string::utf8(b"A magical forest"), 3);
+        assert!(image_url(&nft) == string::utf8(b"ipfs://forest.png"), 4);
+        assert!(tier(&nft) == 1, 5);
+        assert!(creator(&nft) == user, 6);
+        assert!(realm_id(&nft) == 1, 7);
+        
+        test_scenario::return_shared(counter);
+        transfer::public_transfer(nft, user);
+    };
+    
+    // --- THIRD TX: Mint second NFT ---
+    test_scenario::next_tx(&mut scenario, user);
+    {
+        let mut counter = test_scenario::take_shared<RealmCounter>(&scenario);
+        
+        // Mint second NFT
+        let nft2 = mint(
+            &mut counter,
+            string::utf8(b"Desert Realm"),
+            string::utf8(b"A scorching desert"),
+            string::utf8(b"ipfs://desert.png"),
+            user,
+            test_scenario::ctx(&mut scenario)
+        );
+        
+        assert!(count(&counter) == 2, 8);
+        
+        assert!(realm_id(&nft2) == 2, 9);
+        
+        test_scenario::return_shared(counter);
+        transfer::public_transfer(nft2, user);
+    };
+    
+    test_scenario::end(scenario);
+}
+
+#[test]
+fun test_upgrade_tier() {
+    use sui::test_scenario;
+    
+    let admin = @0xAD;
+    let user = @0xCAFE;
+    
+    let mut scenario = test_scenario::begin(admin);
+    
+    // --- FIRST TX: Initialize the module ---
+    {
+        init(PAWMISE {}, test_scenario::ctx(&mut scenario));
+    };
+    
+    // --- SECOND TX: Mint NFT ---
+    test_scenario::next_tx(&mut scenario, user);
+    {
+        let mut counter = test_scenario::take_shared<RealmCounter>(&scenario);
+        
+        let nft = mint(
+            &mut counter,
+            string::utf8(b"Forest Realm"),
+            string::utf8(b"A magical forest"),
+            string::utf8(b"ipfs://forest.png"),
+            user,
+            test_scenario::ctx(&mut scenario)
+        );
+        
+        assert!(tier(&nft) == 1, 0);
+        
+        test_scenario::return_shared(counter);
+        transfer::public_transfer(nft, user);
+    };
+    
+    // --- THIRD TX: Upgrade tier ---
+    test_scenario::next_tx(&mut scenario, user);
+    {
+        let mut nft = test_scenario::take_from_sender<RealmNFT>(&scenario);
+        
+        upgrade_tier(&mut nft, test_scenario::ctx(&mut scenario));
+        
+        assert!(tier(&nft) == 2, 1);
+        
+        transfer::public_transfer(nft, user);
+    };
+    
+    test_scenario::end(scenario);
+}
+
+#[test]
+fun test_burn() {
+    use sui::test_scenario;
+    
+    let admin = @0xAD;
+    let user = @0xCAFE;
+    
+    let mut scenario = test_scenario::begin(admin);
+    
+    // --- FIRST TX: Initialize the module ---
+    {
+        init(PAWMISE {}, test_scenario::ctx(&mut scenario));
+    };
+    
+    // --- SECOND TX: Mint NFT ---
+    test_scenario::next_tx(&mut scenario, user);
+    {
+        let mut counter = test_scenario::take_shared<RealmCounter>(&scenario);
+        
+        let nft = mint(
+            &mut counter,
+            string::utf8(b"Forest Realm"),
+            string::utf8(b"A magical forest"),
+            string::utf8(b"ipfs://forest.png"),
+            user,
+            test_scenario::ctx(&mut scenario)
+        );
+        
+        test_scenario::return_shared(counter);
+        transfer::public_transfer(nft, user);
+    };
+    
+    // --- THIRD TX: Burn NFT ---
+    test_scenario::next_tx(&mut scenario, user);
+    {
+        let nft = test_scenario::take_from_sender<RealmNFT>(&scenario);
+        
+        burn(nft, test_scenario::ctx(&mut scenario));
+    };
+    
+    // --- FOURTH TX: Verify NFT no longer exists ---
+    test_scenario::next_tx(&mut scenario, user);
+    {
+        assert!(!test_scenario::has_most_recent_for_sender<RealmNFT>(&scenario), 0);
+    };
+    
+    test_scenario::end(scenario);
+}
