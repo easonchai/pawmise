@@ -2,33 +2,44 @@ import readline from "node:readline";
 
 import { openai } from "@ai-sdk/openai";
 import { generateText } from "ai";
+import { SuiClient } from "@mysten/sui/client";
+import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
+import {
+  decodeSuiPrivateKey,
+} from "@mysten/sui/cryptography";
+import { SuiKeyPairWalletClient } from "@goat-sdk/wallet-sui";
 
 import { getOnChainTools } from "@goat-sdk/adapter-vercel-ai";
-import { PEPE, USDC, erc20 } from "@goat-sdk/plugin-erc20";
 
-import * as dotenv from 'dotenv';
+import * as dotenv from "dotenv";
+import { BalanceViewerPlugin, myPlugin } from "./plugins/checkSUIBalance.plugin";
+import { ViewSUIBalancePlugin } from "./plugins/viewBalance.plugin";
 dotenv.config();
 
-// 1. Create a wallet client
-// const account = privateKeyToAccount(
-//   process.env.WALLET_PRIVATE_KEY as `0x${string}`,
-// );
+// Step 1: Initialize Sui client and wallet
+const suiClient = new SuiClient({
+  url: "https://fullnode.devnet.sui.io:443", // Or your preferred RPC endpoint
+});
 
-// const walletClient = createWalletClient({
-//   account: account,
-//   transport: http(process.env.RPC_PROVIDER_URL),
-//   chain: baseSepolia,
-// });
+// Create or import a keypair (this example uses a private key)
+const bech32PrivateKey = process.env.PK;
+
+const { schema, secretKey } = decodeSuiPrivateKey(bech32PrivateKey);
+
+const keypair = Ed25519Keypair.fromSecretKey(secretKey);
+
+// Initialize the wallet client
+const walletClient = new SuiKeyPairWalletClient({
+  client: suiClient,
+  keypair: keypair,
+});
 
 (async () => {
   // 2. Get your onchain tools for your wallet
-  // const tools = await getOnChainTools({
-  //   wallet: viem(walletClient),
-  //   plugins: [
-  //     sendETH(), // Enable ETH transfers
-  //     erc20({ tokens: [USDC, PEPE] }), // Enable ERC20 token operations
-  //   ],
-  // });
+  const tools = await getOnChainTools({
+    wallet: walletClient,
+    plugins: [new SendSUIPlugin()],
+  });
 
   // 3. Create a readline interface to interact with the agent
   const rl = readline.createInterface({
@@ -52,7 +63,7 @@ dotenv.config();
     try {
       const result = await generateText({
         model: openai("gpt-4o-mini"),
-        // tools: tools,
+        tools: tools,
         maxSteps: 10, // Maximum number of tool invocations per request
         prompt: prompt,
         onStepFinish: (event) => {
