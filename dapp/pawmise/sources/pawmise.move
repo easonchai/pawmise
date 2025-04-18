@@ -218,3 +218,24 @@ public entry fun burn(nft: RealmNFT, ctx: &mut TxContext) {
 
     object::delete(id);
 }
+
+// === View Functions ===
+public fun name(nft: &RealmNFT): string::String { nft.name }
+
+public fun description(nft: &RealmNFT): string::String { nft.description }
+
+public fun image_url(nft: &RealmNFT): string::String { nft.image_url }
+
+public fun tier(nft: &RealmNFT): u8 { nft.tier }
+
+public fun creator(nft: &RealmNFT): address { nft.creator }
+
+public fun realm_id(nft: &RealmNFT): u64 { nft.realm_id }
+
+public fun created_at(nft: &RealmNFT): u64 { nft.created_at }
+
+public fun updated_at(nft: &RealmNFT): Option<u64> { nft.updated_at }
+
+public fun destroyed_at(nft: &RealmNFT): Option<u64> { nft.destroyed_at }
+
+public fun count(counter: &RealmCounter): u64 { counter.count }
