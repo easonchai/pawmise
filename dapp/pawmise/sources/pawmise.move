@@ -1,5 +1,6 @@
 module pawmise::pawmise;
 
+// === Imports ===
 use std::string;
 use sui::display;
 use sui::package;
