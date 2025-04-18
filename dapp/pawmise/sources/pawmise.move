@@ -1,27 +1,28 @@
 module pawmise::pawmise;
 
-// === Imports ===
+use std::string::String;
 
-// === Errors ===
 const ENotAuthorized: u64 = 0;
 const EInvalidTier: u64 = 1;
 
-// === Constants ===
+const MAX_TIER: u8 = 6;
 
-// === Structs ===
+public struct RealmNFT has key, store {
+    id: UID,
+    realm_id: u64,
+    tier: u8,
+    image_uri: String,
+    description: String,
+    created_at: u64,
+    destroyed_at: u64,
+}
 
-// === Events ===
-
-// === Method Aliases ===
-
-// === Public Functions ===
-
-// === View Functions ===
-
-// === Admin Functions ===
-
-// === Package Functions ===
-
-// === Private Functions ===
-
-// === Test Functions ===
+public struct NFTMinted has copy, drop {
+    object_id: ID,
+    creator: address,
+    realm_id: u64,
+    tier: u8,
+    image_uri: String,
+    description: String,
+    created_at: u64,
+}
