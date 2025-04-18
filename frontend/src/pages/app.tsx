@@ -28,7 +28,7 @@ const AppPage: NextPage = () => {
           rel="stylesheet"
         />
       </Head>
-      <div className="min-h-screen w-full bg-[url('/bg-primary.png')] bg-cover bg-center font-['Patrick_Hand']">
+      <div className="min-h-screen w-full bg-[url('/bg-primary.png')] bg-cover bg-center font-patrick-hand">
         <div className="flex flex-col items-center p-4">
           {/* Realm Status */}
           <div className="flex items-center gap-4 rounded-full bg-white/90 px-4 py-2">
@@ -96,7 +96,7 @@ const AppPage: NextPage = () => {
               alt="Luna"
               width={200}
               height={200}
-              className="mx-auto"`
+              className="mx-auto"
             />
             <p className="mt-2 text-center text-2xl">Luna</p>
           </div>
