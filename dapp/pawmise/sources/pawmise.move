@@ -6,7 +6,6 @@ use sui::display;
 use sui::package;
 
 // === Errors ===
-const ENotAuthorized: u64 = 0;
 const EInvalidTier: u64 = 1;
 
 // === Constants ===
