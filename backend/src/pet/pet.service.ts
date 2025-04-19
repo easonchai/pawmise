@@ -64,12 +64,16 @@ export class PetService {
     // Generate a new keypair
     const keypair = new Ed25519Keypair();
     const privateKey = keypair.getSecretKey();
+    const walletAddress = keypair.getPublicKey().toSuiAddress();
     const encryptedKey = this.encryptPrivateKey(privateKey);
 
     // Store in database
     await this.prisma.pet.update({
       where: { id: petId },
-      data: { privateKey: encryptedKey },
+      data: {
+        privateKey: encryptedKey,
+        walletAddress: walletAddress,
+      },
     });
 
     return privateKey;
