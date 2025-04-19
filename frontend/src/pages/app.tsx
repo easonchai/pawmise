@@ -131,7 +131,7 @@ const AppPage: NextPage = () => {
                 <Image
                   key={i}
                   src={
-                    i < realm.hearts
+                    i < realm.activeHearts
                       ? "/icons/heart_filled.png"
                       : "/icons/heart_empty.png"
                   }
