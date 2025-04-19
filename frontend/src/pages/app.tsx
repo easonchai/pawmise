@@ -22,7 +22,7 @@ const generateMessageId = () => `msg_${++messageIdCounter}`;
 
 const AppPage: NextPage = () => {
   const router = useRouter();
-  const { realm, selectedDog, userName, updateRealmStatus, setSelectedDog } =
+  const { realm, selectedDog, userName, updateRealmStatus, setSelectedDog, setGuardianAngel } =
     useAppStore();
   const [isChatActive, setIsChatActive] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -90,10 +90,11 @@ const AppPage: NextPage = () => {
 
                 // Update selected dog in store with accurate data
                 setSelectedDog({
-                  id: petData.id,
+                  // id: petData.id,
                   breed: petData.breed.toLowerCase(),
                   name: petData.name,
                   image: `/dogs/${petData.breed.toLowerCase()}.png`,
+                  walletAddress: petData.walletAddress,
                 });
               }
             } catch (petError) {

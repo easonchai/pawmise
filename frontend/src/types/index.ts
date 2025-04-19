@@ -5,6 +5,7 @@ export interface Dog {
   breed: string;
   name: string;
   image: string;
+  walletAddress?: string;
 }
 
 export interface GuardianAngel {

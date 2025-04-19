@@ -56,6 +56,7 @@ const initialState: AppState = {
     name: "Lily",
     type: "Nature Spirit",
     image: "/angels/lily.png",
+    walletAddress: "",
   },
 
   // Realm
