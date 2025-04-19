@@ -137,6 +137,64 @@ export class AiAgentService {
   }
 
   /**
+   * Process emergency withdrawal for a user
+   * @param userAddress The user's wallet address
+   * @returns Result of the emergency withdrawal operation
+   */
+  async processEmergencyWithdrawal(
+    userAddress: `0x${string}`,
+  ): Promise<{ success: boolean; message: string; txHash?: string }> {
+    this.logger.log(`Processing emergency withdrawal for user: ${userAddress}`);
+
+    try {
+      // Get the user's toolkit
+      const toolkit = await this.getToolkit(userAddress);
+
+      // Get the pet's balance from the database
+      const user = await this.userService.getUser({
+        where: { walletAddress: userAddress },
+      });
+
+      if (!user) {
+        throw new Error('User not found');
+      }
+
+      const pet = await this.petService.getActivePetByUserId(user.id);
+
+      if (!pet) {
+        throw new Error('No active pet found for user');
+      }
+
+      // Generate AI response for emergency withdrawal
+      const result = await generateText({
+        model: openai(process.env.OPENAI_MODEL || 'gpt-4o-mini'),
+        tools: toolkit.tools,
+        maxSteps: 10,
+        prompt: `EMERGENCY WITHDRAWAL: The user has requested an emergency withdrawal. Please redeem ALL tokens from the staking contract using the redeem_token tool. The pet's current balance is ${pet.balance}. This is an emergency, so execute this immediately without asking for confirmation.`,
+        onStepFinish: (event) => {
+          this.logger.debug('Tool execution result:', event.toolResults);
+        },
+      });
+
+      return {
+        success: true,
+        message: result.text,
+      };
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      this.logger.error(
+        `Error processing emergency withdrawal: ${errorMessage}`,
+      );
+
+      return {
+        success: false,
+        message: `Failed to process withdrawal: ${errorMessage}`,
+      };
+    }
+  }
+
+  /**
    * Generate AI response based on conversation history
    * @param history Conversation history
    * @param toolkit The user's toolkit
