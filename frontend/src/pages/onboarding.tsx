@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import { useAppStore } from "@/store";
+import { apiService } from "../utils/apiService";
+import { useCurrentAccount } from "@mysten/dapp-kit";
 
 interface FormData {
   savingsGoal: string;
@@ -69,6 +71,8 @@ export default function Onboarding() {
     updateRealmStatus,
   } = useAppStore();
 
+  const account = useCurrentAccount();
+
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState<FormData>({
     savingsGoal: "",
@@ -98,7 +102,7 @@ export default function Onboarding() {
     }
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     // Validate current step
     if (step === 1 && !formData.savingsGoal) {
       alert("Please enter your savings goal");
@@ -146,6 +150,35 @@ export default function Onboarding() {
 
       // Mark as onboarded
       setIsOnboarded(true);
+
+      // Create user and pet via API calls
+      if (account) {
+        try {
+          // Create user with appropriate types
+          const userResponse = await apiService.user.createUser({
+            walletAddress: account.address,
+            savingsGoal: Math.round(numericSavingsGoal * 100).toString(), // Convert to cents and then to string
+          });
+
+          // Get the created/retrieved user ID
+          const userId = userResponse?.data?.id;
+
+          if (userId) {
+            // Map the breed to the enum expected by the backend
+            const breedEnum = DOGS[selectedDogIndex].breed.toUpperCase();
+
+            // Create pet with the user ID
+            await apiService.pet.createPet({
+              name: formData.petName || DOGS[selectedDogIndex].name,
+              breed: breedEnum,
+              userId: userId,
+              active: true,
+            });
+          }
+        } catch (error) {
+          console.error("Failed to create user or pet:", error);
+        }
+      }
 
       // Navigate to app
       router.push("/app");
