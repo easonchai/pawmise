@@ -184,14 +184,14 @@ const redeemTokensMethod = async (
 ) => {
   const { amount } = parameters;
   const tx = new Transaction();
-  const actualAmount = amount * 1e9; // Convert to smallest unit (assuming 9 decimals)
+  // const actualAmount = amount * 1e9; // Convert to smallest unit (assuming 9 decimals)
   const marketId = lendingMarketId;
   const sender = walletClient.getAddress();
   tx.setSender(sender);
   console.log('DEBUG: ', {
     marketID: marketId,
     clock: CLOCK_OBJECT_ID,
-    actualAmount: actualAmount,
+    amount: amount,
   });
 
   // Call the redeem function
@@ -205,7 +205,7 @@ const redeemTokensMethod = async (
       tx.object(marketId), // lending market
       tx.pure.u64(0), // reserve_array_index (unused)
       tx.object(CLOCK_OBJECT_ID), // clock
-      tx.pure.u64(actualAmount), // amount to withdraw
+      tx.pure.u64(amount), // amount to withdraw
     ],
   });
 
