@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Prisma, Pet } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
-import crypto from 'crypto';
+import * as crypto from 'crypto';
 
 @Injectable()
 export class PetService {
@@ -38,7 +38,9 @@ export class PetService {
    */
   private encryptPrivateKey(privateKey: string): string {
     const passphrase = this.getOrCreatePassphrase();
+    this.logger.debug('PASSPHRASE: ', passphrase);
     const key = crypto.createHash('sha256').update(passphrase).digest();
+    this.logger.debug('KEY: ', key);
     const iv = crypto.randomBytes(16);
 
     const cipher = crypto.createCipheriv('aes-256-cbc', key, iv);
