@@ -17,9 +17,9 @@ interface CoinStruct {
 
 // const contractAddress = "0x80a711cc6cc1f06067c915a672861f07c457616acb2570f0d3a7889f6f24847a";
 const contractAddress =
-  '0x3ba99780cae8374577a0ad2e128bdb5b6cda3574439fee8288295e0719127084';
+  '0x0b50524fcb74867e27dc364f0cd2d66c4d466b2555933e87dca0bca8689e252d';
 const lendingMarketId =
-  '0xcd279e79afb09db41e18906d64a11b29f9dbcb8f1c5788a7eed9324499f86116';
+  '0x1db44eed61d40769519eac497bc6823dbff87e009a7068110c80e77eb94b9053';
 
 const CLOCK_OBJECT_ID = '0x6'; // System clock object
 
