@@ -293,4 +293,91 @@ export class AiAgentService {
   clearToolkit(userAddress: string) {
     this.userToolkits.delete(userAddress);
   }
+
+  getTier(amount: number): number {
+    const scaledAmount = amount * 1e6;
+    let tier = 1;
+
+    switch (true) {
+      case scaledAmount < 100 * 1e6:
+        tier = 1;
+        break;
+      case scaledAmount < 500 * 1e6:
+        tier = 2;
+        break;
+      case scaledAmount < 1000 * 1e6:
+        tier = 3;
+        break;
+      case scaledAmount < 5000 * 1e6:
+        tier = 4;
+        break;
+      case scaledAmount < 10000 * 1e6:
+        tier = 5;
+        break;
+      default:
+        tier = 1;
+    }
+
+    return tier;
+  }
+
+  getImageUrl(tier: number) {
+    const imageUrls = [
+      '',
+      'https://taudugtrvamveseedfck.supabase.co/storage/v1/object/public/images/realms/tier-1-realm.png',
+      'https://taudugtrvamveseedfck.supabase.co/storage/v1/object/public/images/realms/tier-2-realm.png',
+      'https://taudugtrvamveseedfck.supabase.co/storage/v1/object/public/images/realms/tier-3-realm.png',
+      'https://taudugtrvamveseedfck.supabase.co/storage/v1/object/public/images/realms/tier-4-realm.png',
+      'https://taudugtrvamveseedfck.supabase.co/storage/v1/object/public/images/realms/tier-5-realm.png',
+    ];
+    return imageUrls[tier];
+  }
+
+  async upgradeOrMintNFT(userAddress: string, balance: bigint) {
+    this.logger.log(`Processing emergency withdrawal for user: ${userAddress}`);
+
+    try {
+      // Get the user's toolkit
+      const toolkit = await this.getToolkit(userAddress);
+
+      // Get the pet's balance from the database
+      const user = await this.userService.getUser({
+        where: { walletAddress: userAddress },
+      });
+
+      if (!user) {
+        throw new Error('User not found');
+      }
+
+      const tier = this.getTier(Number(balance.toString()));
+      const imageURl = this.getImageUrl(tier);
+
+      // Generate AI response for emergency withdrawal
+      const result = await generateText({
+        model: openai(process.env.OPENAI_MODEL || 'gpt-4o-mini'),
+        tools: toolkit.tools,
+        maxSteps: 10,
+        prompt: `The pet's current balance is ${balance}. Execute this immediately without asking for confirmation. Mint a NFT for the user. The nft imageUrl is ${imageURl}`,
+        onStepFinish: (event) => {
+          this.logger.debug('Tool execution result:', event.toolResults);
+        },
+      });
+
+      return {
+        success: true,
+        message: result.text,
+      };
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      this.logger.error(
+        `Error processing emergency withdrawal: ${errorMessage}`,
+      );
+
+      return {
+        success: false,
+        message: `Failed to process withdrawal: ${errorMessage}`,
+      };
+    }
+  }
 }

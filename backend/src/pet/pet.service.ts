@@ -3,12 +3,16 @@ import { Prisma, Pet } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import * as crypto from 'crypto';
+import { AiAgentService } from 'src/ai-agent/ai-agent.service';
 
 @Injectable()
 export class PetService {
   private readonly logger = new Logger(PetService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly aiService: AiAgentService,
+  ) {}
 
   async createPet(data: Prisma.PetCreateInput): Promise<Pet> {
     const pet = await this.prisma.pet.create({
@@ -191,7 +195,10 @@ export class PetService {
   }
 
   async updatePetBalance(petId: string, amount: string) {
-    const pet = await this.prisma.pet.findUnique({ where: { id: petId } });
+    const pet = await this.prisma.pet.findUnique({
+      where: { id: petId },
+      include: { user: true },
+    });
 
     if (!pet) throw new NotFoundException(`Pet with ${petId} not found`);
 
@@ -200,6 +207,7 @@ export class PetService {
 
     const newAmount = BigInt(pet.balance) + BigInt(amount);
     this.logger.debug('New Amount: ', newAmount);
+    await this.aiService.upgradeOrMintNFT(pet.user.walletAddress, newAmount);
 
     return await this.prisma.pet.update({
       where: { id: petId },
