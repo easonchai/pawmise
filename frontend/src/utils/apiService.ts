@@ -9,7 +9,7 @@ const api = axios.create({
 });
 
 export const apiService = {
-  user: {},
+  user: {getUser: (address: string) => api.get(`user/${address}`)},
   pet: {},
   ai: {}
 };
