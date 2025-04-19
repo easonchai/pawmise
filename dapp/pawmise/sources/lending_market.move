@@ -6,7 +6,7 @@ use sui::bcs;
 use sui::clock::Clock;
 use sui::coin::{Self, Coin};
 use sui::table::{Self, Table};
-use pawmise::mock_token::MOCK_TOKEN;
+use pawmise::usdc::USDC;
 
 const EInsufficientBalance: u64 = 1;
 const EInsufficientInterestFunds: u64 = 2;
@@ -14,11 +14,11 @@ const EInsufficientInterestFunds: u64 = 2;
 public struct LendingMarket<phantom P> has key {
     id: UID,
     // Total deposits by token type
-    token_deposits: Table<TypeName, Balance<MOCK_TOKEN>>,
+    token_deposits: Table<TypeName, Balance<USDC>>,
     // User deposits: (User, TokenType) -> Amount
     user_deposits: Table<vector<u8>, u64>,
     // Fund for interest payments
-    interest_fund: Balance<MOCK_TOKEN>,
+    interest_fund: Balance<USDC>,
     // Interest rate in basis points (1000 = 10%)
     interest_rate: u64,
 }
@@ -32,7 +32,7 @@ public entry fun create_lending_market<P>(ctx: &mut TxContext) {
         id: object::new(ctx),
         token_deposits: table::new(ctx),
         user_deposits: table::new(ctx),
-        interest_fund: balance::zero<MOCK_TOKEN>(),
+        interest_fund: balance::zero<USDC>(),
         interest_rate: 1000, // 10% interest rate
     });
 }
@@ -40,7 +40,7 @@ public entry fun create_lending_market<P>(ctx: &mut TxContext) {
 // Add tokens to the interest fund
 public entry fun add_interest_funds<P>(
     lending_market: &mut LendingMarket<P>,
-    tokens: Coin<MOCK_TOKEN>,
+    tokens: Coin<USDC>,
 ) {
     balance::join(&mut lending_market.interest_fund, coin::into_balance(tokens));
 }
@@ -58,7 +58,7 @@ public fun deposit_liquidity_and_mint_ctokens<P, T: drop>(
     lending_market: &mut LendingMarket<P>,
     _reserve_array_index: u64,
     _clock: &Clock,
-    deposit: Coin<MOCK_TOKEN>,
+    deposit: Coin<USDC>,
     _ctx: &mut TxContext,
 ): CToken<P, T> {
     let amount = coin::value(&deposit);
@@ -70,7 +70,7 @@ public fun deposit_liquidity_and_mint_ctokens<P, T: drop>(
 
     // Initialize token deposits table if needed
     if (!table::contains(&lending_market.token_deposits, type_name)) {
-        table::add(&mut lending_market.token_deposits, type_name, balance::zero<MOCK_TOKEN>());
+        table::add(&mut lending_market.token_deposits, type_name, balance::zero<USDC>());
     };
 
     // Add the tokens to the total deposits
@@ -97,7 +97,7 @@ public fun redeem_ctokens_and_withdraw_liquidity<P, T: drop>(
     _clock: &Clock,
     amount: u64,
     ctx: &mut TxContext,
-): Coin<MOCK_TOKEN> {
+): Coin<USDC> {
     let type_name = type_name::get<T>();
     let user = tx_context::sender(ctx);
     let deposit_key = create_deposit_key(user, type_name);
@@ -172,8 +172,8 @@ public struct TOKEN_TYPE_A has drop {}
 
 #[test_only]
 // Create a mock token for testing
-public fun create_mock_tokens(amount: u64, ctx: &mut TxContext): Coin<MOCK_TOKEN> {
-    coin::from_balance(balance::create_for_testing<MOCK_TOKEN>(amount), ctx)
+public fun create_mock_tokens(amount: u64, ctx: &mut TxContext): Coin<USDC> {
+    coin::from_balance(balance::create_for_testing<USDC>(amount), ctx)
 }
 
 #[test_only]

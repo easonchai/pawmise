@@ -1,21 +1,21 @@
-module pawmise::mock_token;
+module pawmise::usdc;
 
 use sui::coin::{Self, TreasuryCap, Coin};
 
-public struct MOCK_TOKEN has drop {}
+public struct USDC has drop {}
 
 public struct Faucet has key {
     id: UID,
-    treasury_cap: TreasuryCap<MOCK_TOKEN>,
+    treasury_cap: TreasuryCap<USDC>,
 }
 
-fun init(witness: MOCK_TOKEN, ctx: &mut TxContext) {
+fun init(witness: USDC, ctx: &mut TxContext) {
     let (treasury_cap, metadata) = coin::create_currency(
         witness,
         9,
-        b"MOCK",
-        b"Mock Token",
-        b"A simple mock token for testing Pawmise dApp",
+        b"USDC",
+        b"USD Coin",
+        b"A simple mock USDC for testing Pawmise dApp",
         option::none(),
         ctx,
     );
@@ -54,7 +54,7 @@ fun test_public_faucet() {
     let mut scenario = test_scenario::begin(deployer);
 
     {
-        init(MOCK_TOKEN {}, test_scenario::ctx(&mut scenario));
+        init(USDC {}, test_scenario::ctx(&mut scenario));
     };
 
     test_scenario::next_tx(&mut scenario, user1);
@@ -73,8 +73,8 @@ fun test_public_faucet() {
 
     test_scenario::next_tx(&mut scenario, user1);
     {
-        let mut coin1 = test_scenario::take_from_sender<Coin<MOCK_TOKEN>>(&scenario);
-        let coin2 = test_scenario::take_from_sender<Coin<MOCK_TOKEN>>(&scenario);
+        let mut coin1 = test_scenario::take_from_sender<Coin<USDC>>(&scenario);
+        let coin2 = test_scenario::take_from_sender<Coin<USDC>>(&scenario);
 
         let value1 = coin::value(&coin1);
         let value2 = coin::value(&coin2);
