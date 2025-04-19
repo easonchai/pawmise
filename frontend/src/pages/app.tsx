@@ -5,6 +5,7 @@ import { RadialFab } from "@/components/ui/radial-fab";
 import { Camera, Edit, Settings } from "lucide-react";
 import { EmergencyDialog } from "@/components/ui/emergency-dialog";
 import { useState } from "react";
+import { useRouter } from "next/router";
 
 interface RealmStatus {
   status: string;
@@ -15,6 +16,7 @@ interface RealmStatus {
 }
 
 const AppPage: NextPage = () => {
+  const router = useRouter();
   const [emergencyOpen, setEmergencyOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
@@ -129,7 +131,10 @@ const AppPage: NextPage = () => {
           </div>
 
           {/* Camera Button */}
-          <div className="absolute right-6 top-48">
+          <div
+            className="absolute right-6 top-48 cursor-pointer"
+            onClick={() => router.push("/share")}
+          >
             <Image
               src="/icons/camera.png"
               alt="Camera"
