@@ -7,6 +7,9 @@ import { useState, useRef, useEffect } from "react";
 import { MessageBubble } from "@/components/chat/message-bubble";
 import { ChatInput } from "@/components/chat/chat-input";
 import { cn } from "@/lib/utils";
+import { apiService } from "@/utils/apiService";
+import { useCurrentAccount } from "@mysten/dapp-kit";
+import { calculateRealmStatus } from "@/lib/realm";
 
 interface Message {
   id: string;
@@ -19,18 +22,84 @@ const generateMessageId = () => `msg_${++messageIdCounter}`;
 
 const AppPage: NextPage = () => {
   const router = useRouter();
-  const { realm, selectedDog } = useAppStore();
+  const { realm, selectedDog, userName, updateRealmStatus, setSelectedDog } =
+    useAppStore();
   const [isChatActive, setIsChatActive] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const isInitializedRef = useRef(false);
-  const { userName } = useAppStore();
+  const account = useCurrentAccount();
+  const [isDataLoading, setIsDataLoading] = useState(true);
 
   const savingsPercentage = Math.round(
     (realm.savingsAchieved / realm.savingsGoal) * 100
   );
+
+  useEffect(() => {
+    const fetchUserAndPetData = async () => {
+      if (account) {
+        try {
+          setIsDataLoading(true);
+
+          // Fetch user data by wallet address
+          const userResponse = await apiService.user.getUser(account.address);
+          const userData = userResponse.data;
+
+          if (userData) {
+            console.log("User data:", userData);
+
+            // Convert savings goal from cents to dollars (if stored as cents)
+            const savingsGoal = parseFloat(userData.savingsGoal);
+
+            // Use our new endpoint to get the active pet for this user
+            try {
+              const petResponse = await apiService.pet.getActivePetByUserId(
+                userData.id
+              );
+              const petData = petResponse.data;
+
+              if (petData) {
+                console.log("Active pet data:", petData);
+
+                // Parse the balance (savings achieved)
+                const savingsAchieved = parseFloat(petData.balance);
+
+                // Calculate realm status
+                const realmStatus = calculateRealmStatus(
+                  savingsAchieved,
+                  savingsGoal
+                );
+
+                // Update realm status in store
+                updateRealmStatus({
+                  savingsGoal,
+                  savingsAchieved,
+                  status: realmStatus,
+                });
+
+                // Update selected dog in store with accurate data
+                setSelectedDog({
+                  breed: petData.breed.toLowerCase(),
+                  name: petData.name,
+                  image: `/dogs/${petData.breed.toLowerCase()}.png`,
+                });
+              }
+            } catch (petError) {
+              console.error("Failed to fetch active pet data:", petError);
+            }
+          }
+        } catch (error) {
+          console.error("Failed to fetch user data:", error);
+        } finally {
+          setIsDataLoading(false);
+        }
+      }
+    };
+
+    fetchUserAndPetData();
+  }, [account, updateRealmStatus, setSelectedDog]);
 
   // Scroll to bottom when new messages arrive
   useEffect(() => {
@@ -120,7 +189,7 @@ const AppPage: NextPage = () => {
               <div>
                 <p className="text-base leading-tight">Realm Status</p>
                 <p className="text-lg font-medium leading-tight">
-                  {realm.status}
+                  {isDataLoading ? "Loading..." : realm.status}
                 </p>
               </div>
             </div>
@@ -147,18 +216,24 @@ const AppPage: NextPage = () => {
           <div className="mt-8 w-full max-w-md mx-auto">
             <div className="flex justify-between items-center mb-1">
               <p className="text-base">Savings Goal</p>
-              <p className="text-base">${realm.savingsGoal.toLocaleString()}</p>
+              <p className="text-base">
+                {isDataLoading
+                  ? "Loading..."
+                  : `$${realm.savingsGoal.toLocaleString()}`}
+              </p>
             </div>
             <div className="h-3 w-full rounded-full bg-[#392E1F]/20 overflow-hidden border-2 border-[#392E1F]">
               <div
                 className="h-full bg-[#4CAF50] transition-all"
                 style={{
-                  width: `${savingsPercentage}%`,
+                  width: `${isDataLoading ? 0 : savingsPercentage}%`,
                 }}
               />
             </div>
             <p className="text-sm mt-1 text-center">
-              {savingsPercentage}% of goal achieved
+              {isDataLoading
+                ? "Loading..."
+                : `${savingsPercentage}% of goal achieved`}
             </p>
           </div>
 
@@ -185,15 +260,21 @@ const AppPage: NextPage = () => {
             {isChatActive ? (
               <></>
             ) : (
-              <p className="my-2 text-2xl">{selectedDog?.name || "Luna"}</p>
+              <p className="my-2 text-2xl">
+                {isDataLoading ? "Loading..." : selectedDog?.name || "Luna"}
+              </p>
             )}
             <div className="relative w-48 h-48">
-              <Image
-                src={selectedDog?.image || "/dogs/pom.png"}
-                alt={selectedDog?.name || "Guardian Angel"}
-                fill
-                className="object-contain"
-              />
+              {isDataLoading ? (
+                <p className="text-center">Loading pet...</p>
+              ) : (
+                <Image
+                  src={selectedDog?.image || "/dogs/pom.png"}
+                  alt={selectedDog?.name || "Guardian Angel"}
+                  fill
+                  className="object-contain"
+                />
+              )}
             </div>
           </div>
         </div>
