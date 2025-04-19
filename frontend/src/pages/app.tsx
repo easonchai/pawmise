@@ -22,6 +22,15 @@ interface Message {
 let messageIdCounter = 0;
 const generateMessageId = () => `msg_${++messageIdCounter}`;
 
+const getTierFromAmount = (amount: number): number => {
+  if (amount < 100) return 1;
+  if (amount < 500) return 2;
+  if (amount < 1000) return 3;
+  if (amount < 5000) return 4;
+  if (amount < 10000) return 5;
+  return 6;
+};
+
 const AppPage: NextPage = () => {
   const router = useRouter();
   const { realm, selectedDog, userName, updateRealmStatus, setSelectedDog } =
@@ -86,12 +95,14 @@ const AppPage: NextPage = () => {
                   savingsAchieved,
                   savingsGoal
                 );
+                const tier = getTierFromAmount(savingsAchieved);
 
                 // Update realm status in store
                 updateRealmStatus({
                   savingsGoal,
                   savingsAchieved,
                   status: realmStatus,
+                  tier,
                 });
 
                 // Update selected dog in store with accurate data
