@@ -5,7 +5,8 @@ import { Camera, Edit, Settings } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
-
+import { useDisconnectWallet } from "@mysten/dapp-kit";
+import { useAppStore } from "@/store";
 interface BottomNavProps {
   currentPath: string;
   onChatClick?: () => void;
@@ -13,6 +14,8 @@ interface BottomNavProps {
 
 export function BottomNav({ currentPath, onChatClick }: BottomNavProps) {
   const router = useRouter();
+  const { mutate: disconnect } = useDisconnectWallet();
+  const { logout } = useAppStore();
   const [emergencyOpen, setEmergencyOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
@@ -48,6 +51,13 @@ export function BottomNav({ currentPath, onChatClick }: BottomNavProps) {
       color: "bg-purple-500 text-white",
     },
   ];
+
+  const handleLogout = () => {
+    disconnect();
+    logout();
+    setSettingsOpen(false);
+    router.push("/");
+  };
 
   return (
     <>
@@ -156,10 +166,7 @@ Are you sure you're prepared for this?"
         <Button
           variant="emergencyDestructive"
           className="flex-1"
-          onClick={() => {
-            console.log("Logging out...");
-            setSettingsOpen(false);
-          }}
+          onClick={handleLogout}
         >
           Log Out
         </Button>
