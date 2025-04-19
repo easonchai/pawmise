@@ -23,6 +23,7 @@ export const apiService = {
     getPet: (id: string) => api.get(`pet/${id}`),
     getActivePetByUserId: (userId: string) =>
       api.get(`pet/active/user/${userId}`),
+    updateBalance: (data: {id: string, amount: string}) => api.post(`pet/updateBalance`, data),
   },
   ai: {},
 };

@@ -21,6 +21,7 @@ import {
 } from "@mysten/dapp-kit";
 import { useAppStore } from "@/store";
 import { Transaction } from "@mysten/sui/transactions";
+import { apiService } from "@/utils/apiService";
 
 interface BottomNavProps {
   currentPath: string;
@@ -75,6 +76,7 @@ export function BottomNav({ currentPath, onChatClick }: BottomNavProps) {
         signature,
         options: {
           // Raw effects are required so the effects can be reported back to the wallet
+          showEffects: true,
           showRawEffects: true,
           // Select additional data to return
           showObjectChanges: true,
@@ -104,80 +106,85 @@ export function BottomNav({ currentPath, onChatClick }: BottomNavProps) {
     try {
       // Create a new transaction
       const tx = new Transaction();
-      
+
       // Convert amount to MIST (9 decimals for MOCK token)
       const mockAmountToSend = BigInt(amount * 1e9);
       // Send 0.5 SUI per transaction
       const suiAmountToSend = BigInt(5 * 1e8);
-      
+
       // Get MOCK tokens from wallet
       const mockCoinsResponse = await suiClient.getCoins({
         owner: currentAccount.address,
-        coinType: MOCK_TOKEN_TYPE
+        coinType: MOCK_TOKEN_TYPE,
       });
-      
+
       const mockCoins = mockCoinsResponse.data;
-      
+
       if (!mockCoins || mockCoins.length === 0) {
         setIsProcessing(false);
         return;
       }
-      
+
       // Find a MOCK token with sufficient balance
       const suitableMockCoin = mockCoins.find(
-        coin => BigInt(coin.balance) >= mockAmountToSend
+        (coin) => BigInt(coin.balance) >= mockAmountToSend,
       );
-      
+
       if (suitableMockCoin) {
         // If we found a single coin with enough balance, use it directly
         const [splitToken] = tx.splitCoins(
           tx.object(suitableMockCoin.coinObjectId),
-          [mockAmountToSend]
+          [mockAmountToSend],
         );
         tx.transferObjects([splitToken], selectedDog.walletAddress);
       } else {
         // If no single coin has enough, merge coins until we have enough
         let totalBalance = BigInt(0);
         const tokensToUse = [];
-        
+
         // Find coins to merge until we have enough balance
         for (const coin of mockCoins) {
           totalBalance += BigInt(coin.balance);
           tokensToUse.push(coin.coinObjectId);
-          
+
           if (totalBalance >= mockAmountToSend) break;
         }
-        
+
         if (totalBalance < mockAmountToSend) {
           setIsProcessing(false);
           return;
         }
-        
+
         // Merge coins and split the amount
         const primaryToken = tx.object(tokensToUse[0]);
         if (tokensToUse.length > 1) {
-          const otherTokens = tokensToUse.slice(1).map(id => tx.object(id));
+          const otherTokens = tokensToUse.slice(1).map((id) => tx.object(id));
           tx.mergeCoins(primaryToken, otherTokens);
         }
-        
+
         const [splitToken] = tx.splitCoins(primaryToken, [mockAmountToSend]);
         tx.transferObjects([splitToken], selectedDog.walletAddress);
       }
-      
+
       // Add SUI transfer - we'll use the gas coin directly for simplicity
       const [suiSplitCoin] = tx.splitCoins(tx.gas, [suiAmountToSend]);
       tx.transferObjects([suiSplitCoin], selectedDog.walletAddress);
-      
+
       // Execute the transaction
       const result = await signAndExecute({
         transaction: tx,
       });
-      if (result.effects?.status.status === "success") {
+      console.log("RESULT")
+      console.dir(result, {depth: 7})
+      if (result.effects?.status.status === "success" && selectedDog.id) {
         // TODO: Update balance
+        await apiService.pet.updateBalance({
+          id: selectedDog.id,
+          amount: mockAmountToSend.toString(),
+        });
       }
-      
+
       console.log("Transaction successful!", result.digest);
-      
     } catch (error) {
       console.error("Transaction failed:", error);
     } finally {

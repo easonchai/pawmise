@@ -90,7 +90,7 @@ const AppPage: NextPage = () => {
 
                 // Update selected dog in store with accurate data
                 setSelectedDog({
-                  // id: petData.id,
+                  id: petData.id,
                   breed: petData.breed.toLowerCase(),
                   name: petData.name,
                   image: `/dogs/${petData.breed.toLowerCase()}.png`,

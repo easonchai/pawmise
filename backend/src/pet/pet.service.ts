@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { Prisma, Pet } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
@@ -183,5 +183,24 @@ export class PetService {
       this.logger.error(`Error finding pet: ${error}`);
       throw error;
     }
+  }
+
+  async updatePetBalance(petId: string, amount: string) {
+    const pet = await this.prisma.pet.findUnique({ where: { id: petId } });
+
+    if (!pet) throw new NotFoundException(`Pet with ${petId} not found`);
+
+    this.logger.debug('Pet before balance: ', pet.balance);
+    this.logger.debug('Amount: ', amount);
+
+    const newAmount = BigInt(pet.balance) + BigInt(amount);
+    this.logger.debug('New Amount: ', newAmount);
+
+    return await this.prisma.pet.update({
+      where: { id: petId },
+      data: {
+        balance: newAmount.toString(),
+      },
+    });
   }
 }
