@@ -68,10 +68,10 @@ export class AiAgentService {
     });
 
     // Initialize tools for this wallet
-    const tools = await getOnChainTools({
+    const tools = (await getOnChainTools({
       wallet: walletClient,
       plugins: [new NftSUIPlugin(), new TokenPlugin()],
-    }) as ToolSet;
+    })) as ToolSet;
 
     // Create and store the toolkit
     const toolkit: UserToolkit = {
@@ -105,7 +105,8 @@ export class AiAgentService {
     });
 
     // Get updated history after adding user message
-    const updatedHistory = this.chatSessionService.getSessionHistory(userAddress);
+    const updatedHistory =
+      this.chatSessionService.getSessionHistory(userAddress);
 
     // Generate response
     const aiResponse = await this.chat(updatedHistory, toolkit);
@@ -139,7 +140,8 @@ export class AiAgentService {
 
       return result.text;
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
       this.logger.error(`Error generating AI response: ${errorMessage}`);
       return "I'm sorry, I encountered an error while processing your request.";
     }
