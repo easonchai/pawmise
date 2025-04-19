@@ -139,9 +139,9 @@ export default function Onboarding() {
         tier: getTierFromAmount(numericSavingsGoal),
         savingsGoal: numericSavingsGoal,
         savingsAchieved: 0, // Start with 0 savings
-        hearts: 2, // Default starting hearts
+        hearts: 3, // Default starting hearts
         maxHearts: 3,
-        status: "Just Started",
+        status: "Dormant",
       });
 
       // Mark as onboarded
