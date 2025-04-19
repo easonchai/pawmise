@@ -143,6 +143,43 @@ export class PetService {
     }
   }
 
+  /**
+   * Get the most recent pet for a user regardless of active status
+   * This is specifically for the app page to handle both active and inactive pets
+   */
+  async getPetByUserId(userId: string): Promise<Pet | null> {
+    this.logger.debug(`Finding any pet for user: ${userId}`);
+
+    try {
+      const pet = await this.prisma.pet.findFirst({
+        where: {
+          userId: userId,
+        },
+        orderBy: {
+          updatedAt: 'desc',
+        },
+      });
+
+      if (pet) {
+        this.logger.debug(
+          `Found pet for user: ${userId}, active status: ${pet.active}`,
+        );
+      } else {
+        this.logger.debug(`No pet found for user: ${userId}`);
+        return null;
+      }
+
+      if (!pet.walletAddress || !pet.privateKey) {
+        await this.generateAndStoreKeypair(pet.id);
+      }
+
+      return pet;
+    } catch (error) {
+      this.logger.error(`Error finding pet: ${error}`);
+      throw error;
+    }
+  }
+
   async getPet<T extends Prisma.PetInclude | undefined = undefined>(params: {
     where: Prisma.PetWhereUniqueInput;
     include?: T;

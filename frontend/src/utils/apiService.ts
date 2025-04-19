@@ -21,6 +21,7 @@ export const apiService = {
       active: boolean;
     }) => api.post("pet", data),
     getPet: (id: string) => api.get(`pet/${id}`),
+    getPetByUserId: (userId: string) => api.get(`pet/any/user/${userId}`),
     getActivePetByUserId: (userId: string) =>
       api.get(`pet/active/user/${userId}`),
     updateBalance: (data: { id: string; amount: string }) =>

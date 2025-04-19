@@ -59,4 +59,18 @@ export class PetController {
       updateBalanceDto.amount,
     );
   }
+
+  @Get('any/user/:userId')
+  @ApiOperation({
+    summary: 'Get any pet for a user regardless of active status',
+  })
+  async getPetByUserId(@Param('userId') userId: string) {
+    const pet = await this.petService.getPetByUserId(userId);
+
+    if (!pet) {
+      throw new NotFoundException('No pet found for this user');
+    }
+
+    return pet;
+  }
 }
