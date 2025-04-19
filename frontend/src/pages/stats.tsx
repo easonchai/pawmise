@@ -3,6 +3,7 @@ import { useRouter } from "next/router";
 import { useAppStore } from "@/store";
 import Image from "next/image";
 import { BottomNav } from "@/components/bottom-nav";
+import { PieChart, Pie, Cell, Label } from "recharts";
 
 const StatsPage: NextPage = () => {
   const router = useRouter();
@@ -11,6 +12,19 @@ const StatsPage: NextPage = () => {
   const savingsPercentage = Math.round(
     (realm.savingsAchieved / realm.savingsGoal) * 100
   );
+
+  const chartData = [
+    {
+      name: "saved",
+      value: realm.savingsAchieved,
+      color: "#4CAF50",
+    },
+    {
+      name: "remaining",
+      value: realm.savingsGoal - realm.savingsAchieved,
+      color: "#E2E8F0",
+    },
+  ];
 
   // Mock data for savings trend (7 rows x 12 columns)
   const savingsTrend = Array(4)
@@ -44,28 +58,26 @@ const StatsPage: NextPage = () => {
         <div className="mt-4 bg-[#F6D998] rounded-lg p-4 shadow-md border-2 border-[#392E1F]">
           <h2 className="text-2xl mb-4">Savings Goal Progress</h2>
           <div className="relative aspect-square w-48 mx-auto mb-4">
-            <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-3xl font-medium">{savingsPercentage}%</span>
-            </div>
-            <svg className="w-full h-full -rotate-90">
-              <circle
+            <PieChart width={200} height={200}>
+              <Pie
+                data={chartData}
                 cx="50%"
                 cy="50%"
-                r="45%"
-                stroke="#E2E8F0"
-                strokeWidth="10%"
-                fill="none"
-              />
-              <circle
-                cx="50%"
-                cy="50%"
-                r="45%"
-                stroke="#4CAF50"
-                strokeWidth="10%"
-                fill="none"
-                strokeDasharray={`${savingsPercentage * 2.83} 283`}
-              />
-            </svg>
+                innerRadius={60}
+                outerRadius={80}
+                paddingAngle={5}
+                dataKey="value"
+              >
+                {chartData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.color} />
+                ))}
+                <Label
+                  value={`${savingsPercentage}%`}
+                  position="center"
+                  className="text-3xl font-bold"
+                />
+              </Pie>
+            </PieChart>
           </div>
           <div className="text-center">
             <p className="text-lg">Current Total</p>

@@ -20,8 +20,9 @@ export const apiService = {
       userId: string;
       active: boolean;
     }) => api.post("pet", data),
-    // ADDED: Get pet endpoint
     getPet: (id: string) => api.get(`pet/${id}`),
+    getActivePetByUserId: (userId: string) =>
+      api.get(`pet/active/user/${userId}`),
   },
   ai: {},
 };

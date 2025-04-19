@@ -1,6 +1,7 @@
 import { RealmStatus } from "@/lib/realm";
 
 export interface Dog {
+  id?: string;
   breed: string;
   name: string;
   image: string;

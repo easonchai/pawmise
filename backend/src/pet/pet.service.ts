@@ -110,6 +110,34 @@ export class PetService {
     return this.decryptPrivateKey(pet.privateKey);
   }
 
+  /**
+   * Get active pet for a specific user
+   * Uses the unique constraint on [userId, active]
+   */
+  async getActivePetByUserId(userId: string): Promise<Pet | null> {
+    this.logger.debug(`Finding active pet for user: ${userId}`);
+
+    try {
+      const pet = await this.prisma.pet.findFirst({
+        where: {
+          userId: userId,
+          active: true,
+        },
+      });
+
+      if (pet) {
+        this.logger.debug(`Found active pet for user: ${userId}`);
+      } else {
+        this.logger.debug(`No active pet found for user: ${userId}`);
+      }
+
+      return pet;
+    } catch (error) {
+      this.logger.error(`Error finding active pet: ${error}`);
+      throw error;
+    }
+  }
+
   async getPet<T extends Prisma.PetInclude | undefined = undefined>(params: {
     where: Prisma.PetWhereUniqueInput;
     include?: T;
