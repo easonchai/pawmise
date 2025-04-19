@@ -24,7 +24,7 @@ const lendingMarketId =
 const CLOCK_OBJECT_ID = '0x6'; // System clock object
 
 const TOKENS = {
-  MOCK: `${contractAddress}::mock_token::MOCK_TOKEN`,
+  USDC: `${contractAddress}::usdc::USDC`,
 };
 
 const mintTokenParameterSchema = z.object({
@@ -73,7 +73,7 @@ const mintTokenMethod = async (
   const actualAmount = amount * 1e9;
   tx.setSender(sender);
   tx.moveCall({
-    target: `${contractAddress}::mock_token::request_tokens_for_self`,
+    target: `${contractAddress}::usdc::request_tokens_for_self`,
     arguments: [
       tx.object(faucetId),
       tx.pure.u64(actualAmount), // creator address (using the wallet's address)
@@ -102,11 +102,11 @@ const depositTokensMethod = async (
   const sender = walletClient.getAddress();
   tx.setSender(sender);
 
-  // Get the MOCK tokens from the wallet
-  const mockTokens = await getCoinsOfType(walletClient, TOKENS.MOCK);
+  // Get the USDC tokens from the wallet
+  const usdcTokens = await getCoinsOfType(walletClient, TOKENS.USDC);
 
-  if (mockTokens.length === 0) {
-    throw new Error('No MOCK tokens found in wallet');
+  if (usdcTokens.length === 0) {
+    throw new Error('No USDC found in wallet');
   }
 
   // Find suitable coins to use
@@ -114,7 +114,7 @@ const depositTokensMethod = async (
   const tokensToUse: string[] = [];
 
   // Collect coins until we have enough
-  for (const token of mockTokens) {
+  for (const token of usdcTokens) {
     totalBalance += Number(token.balance);
     tokensToUse.push(token.coinObjectId);
 
@@ -123,7 +123,7 @@ const depositTokensMethod = async (
 
   if (totalBalance < actualAmount) {
     throw new Error(
-      `Insufficient MOCK balance: have ${totalBalance / 1e9}, need ${amount}`,
+      `Insufficient USDC balance: have ${totalBalance / 1e9}, need ${amount}`,
     );
   }
 
@@ -135,7 +135,7 @@ const depositTokensMethod = async (
     coinToUse = tx.object(tokensToUse[0]);
 
     // Split the exact amount if needed
-    if (Number(mockTokens[0].balance) > actualAmount) {
+    if (Number(usdcTokens[0].balance) > actualAmount) {
       [coinToUse] = tx.splitCoins(coinToUse, [actualAmount]);
     }
   } else {
@@ -154,7 +154,7 @@ const depositTokensMethod = async (
     target: `${contractAddress}::lending_market::deposit_liquidity_and_mint_ctokens`,
     typeArguments: [
       `${contractAddress}::pawmise::PAWMISE`,
-      `${contractAddress}::mock_token::MOCK_TOKEN`,
+      `${contractAddress}::usdc::USDC`,
     ],
     arguments: [
       tx.object(marketId), // lending market
@@ -199,7 +199,7 @@ const redeemTokensMethod = async (
     target: `${contractAddress}::lending_market::redeem_ctokens_and_withdraw_liquidity`,
     typeArguments: [
       `${contractAddress}::pawmise::PAWMISE`,
-      `${contractAddress}::mock_token::MOCK_TOKEN`,
+      `${contractAddress}::usdc::USDC`,
     ],
     arguments: [
       tx.object(marketId), // lending market
@@ -225,9 +225,9 @@ const redeemTokensMethod = async (
   };
 };
 
-export class MockTokenPlugin extends PluginBase<SuiWalletClient> {
+export class USDCTokenPlugin extends PluginBase<SuiWalletClient> {
   constructor() {
-    super('mockContractTools', []);
+    super('usdcContractTools', []);
   }
 
   supportsChain = (chain: Chain) => chain.type === 'sui';

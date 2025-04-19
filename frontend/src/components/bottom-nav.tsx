@@ -27,8 +27,8 @@ interface BottomNavProps {
   currentPath: string;
   onChatClick?: () => void;
 }
-const MOCK_TOKEN_TYPE =
-  "0x3ba99780cae8374577a0ad2e128bdb5b6cda3574439fee8288295e0719127084::mock_token::MOCK_TOKEN";
+const USDC_TOKEN_TYPE =
+  "0x0b50524fcb74867e27dc364f0cd2d66c4d466b2555933e87dca0bca8689e252d::usdc::USDC";
 
 // async function getCoinsOfType(
 //   client: SuiClient,
@@ -115,7 +115,7 @@ export function BottomNav({ currentPath, onChatClick }: BottomNavProps) {
       // Get MOCK tokens from wallet
       const mockCoinsResponse = await suiClient.getCoins({
         owner: currentAccount.address,
-        coinType: MOCK_TOKEN_TYPE,
+        coinType: USDC_TOKEN_TYPE,
       });
 
       const mockCoins = mockCoinsResponse.data;

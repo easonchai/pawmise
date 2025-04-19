@@ -14,7 +14,7 @@ import { TokenPlugin } from './plugins/tokenHandler.plugin';
 import { NftSUIPlugin } from './plugins/nftHandler.plugin';
 import { PetService } from 'src/pet/pet.service';
 import { UserService } from 'src/user/user.service';
-import { MockTokenPlugin } from './plugins/stakeContractHandler.plugin';
+import { USDCTokenPlugin } from './plugins/stakeContractHandler.plugin';
 import { systemPrompt } from './prompts/systemPrompt';
 
 interface UserToolkit {
@@ -86,7 +86,7 @@ export class AiAgentService {
     // Initialize tools for this wallet
     const tools = (await getOnChainTools({
       wallet: walletClient,
-      plugins: [new NftSUIPlugin(), new TokenPlugin(), new MockTokenPlugin()],
+      plugins: [new NftSUIPlugin(), new TokenPlugin(), new USDCTokenPlugin()],
     })) as ToolSet;
 
     // Create and store the toolkit
