@@ -2,26 +2,46 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/router";
-import { ConnectButton, useAccounts } from "@mysten/dapp-kit";
+import { ConnectButton, useCurrentAccount } from "@mysten/dapp-kit";
 import { useAppStore } from "@/store";
+import { apiService } from "../utils/apiService";
 
 export default function Home() {
   const router = useRouter();
-  const accounts = useAccounts();
-  const { setWalletAddress, isOnboarded } = useAppStore();
+  const account = useCurrentAccount();
+  const { setWalletAddress, isOnboarded, setIsOnboarded } = useAppStore();
 
   useEffect(() => {
-    if (accounts && accounts.length > 0) {
-      setWalletAddress(accounts[0].address);
+    const checkUserAndRedirect = async () => {
+      if (account) {
+        const address = account.address;
+        setWalletAddress(address);
 
-      // TODO: Replace with actual API call
-      if (isOnboarded) {
-        router.push("/app");
-      } else {
-        router.push("/onboarding");
+        // ADDED: Check if user exists in database
+        try {
+          const response = await apiService.user.getUser(address);
+          if (response.data) {
+            // User exists, mark as onboarded
+            setIsOnboarded(true);
+            router.push("/app");
+          } else {
+            // User doesn't exist, go to onboarding
+            router.push("/onboarding");
+          }
+        } catch (error) {
+          console.error("Error checking user:", error);
+          // If API error, fallback to local state
+          if (isOnboarded) {
+            router.push("/app");
+          } else {
+            router.push("/onboarding");
+          }
+        }
       }
-    }
-  }, [accounts, router, setWalletAddress, isOnboarded]);
+    };
+
+    checkUserAndRedirect();
+  }, [account, router, setWalletAddress, isOnboarded, setIsOnboarded]);
 
   return (
     <div className="font-patrick-hand text-[#282424] bg-[url('/backgrounds/bg-primary.png')] bg-cover bg-center min-h-screen py-16 justify-between flex flex-col">
