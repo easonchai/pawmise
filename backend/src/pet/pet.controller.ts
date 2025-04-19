@@ -1,9 +1,22 @@
-import { Controller, Get, Param, NotFoundException } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Param,
+  NotFoundException,
+  Body,
+} from '@nestjs/common';
 import { PetService } from './pet.service';
+import { Prisma } from '@prisma/client';
 
 @Controller('pet')
 export class PetController {
   constructor(private readonly petService: PetService) {}
+
+  @Post()
+  async createPet(@Body() petData: Prisma.PetCreateInput) {
+    return this.petService.createPet(petData);
+  }
 
   @Get(':id')
   async getPetInfo(@Param('id') id: string) {
