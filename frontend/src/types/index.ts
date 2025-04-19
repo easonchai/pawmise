@@ -1,3 +1,5 @@
+import { RealmStatus } from "@/lib/realm";
+
 export interface Dog {
   breed: string;
   name: string;
@@ -31,9 +33,10 @@ export interface UserState {
 }
 
 export interface RealmState {
-  status: string;
+  status: RealmStatus;
   hearts: number;
   maxHearts: number;
+  activeHearts: number;
   savingsGoal: number;
   savingsAchieved: number;
   tier: number;

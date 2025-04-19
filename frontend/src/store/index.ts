@@ -1,6 +1,13 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { AppState, Dog, RealmState, GuardianAngel, ChatMessage } from "@/types";
+import { calculateRealmStatus } from "@/lib/realm";
+import {
+  createHeartSystem,
+  addHearts,
+  removeHearts,
+  resetHearts,
+} from "@/lib/heart";
 
 interface AppStore extends AppState {
   // Auth Actions
@@ -16,8 +23,9 @@ interface AppStore extends AppState {
 
   // Realm Actions
   updateRealmStatus: (status: Partial<RealmState>) => void;
-  incrementHearts: () => void;
-  decrementHearts: () => void;
+  addHearts: (amount: number) => void;
+  removeHearts: (amount: number) => void;
+  resetHearts: () => void;
   updateSavingsProgress: (achieved: number) => void;
   updateTier: (tier: number) => void;
 
@@ -28,6 +36,8 @@ interface AppStore extends AppState {
   // Reset Action
   reset: () => void;
 }
+
+const heartSystem = createHeartSystem(3);
 
 const initialState: AppState = {
   // Auth
@@ -50,12 +60,13 @@ const initialState: AppState = {
 
   // Realm
   realm: {
-    status: "Flourishing",
-    hearts: 2,
-    maxHearts: 3,
+    status: "Dormant",
+    hearts: heartSystem.hearts,
+    maxHearts: heartSystem.maxHearts,
+    activeHearts: heartSystem.activeHearts,
     savingsGoal: 25000,
-    savingsAchieved: 20000,
-    tier: 3,
+    savingsAchieved: 0,
+    tier: 1,
   },
 
   // Chat
@@ -104,32 +115,75 @@ export const useAppStore = create<AppStore>()(
           realm: { ...state.realm, ...status },
         })),
 
-      incrementHearts: () =>
-        set((state) => ({
-          ...state,
-          realm: {
-            ...state.realm,
-            hearts: Math.min(state.realm.hearts + 1, state.realm.maxHearts),
-          },
-        })),
+      addHearts: (amount) =>
+        set((state) => {
+          const updatedSystem = addHearts(
+            {
+              hearts: state.realm.hearts,
+              maxHearts: state.realm.maxHearts,
+              activeHearts: state.realm.activeHearts,
+            },
+            amount
+          );
+          return {
+            ...state,
+            realm: {
+              ...state.realm,
+              ...updatedSystem,
+            },
+          };
+        }),
 
-      decrementHearts: () =>
-        set((state) => ({
-          ...state,
-          realm: {
-            ...state.realm,
-            hearts: Math.max(state.realm.hearts - 1, 0),
-          },
-        })),
+      removeHearts: (amount) =>
+        set((state) => {
+          const updatedSystem = removeHearts(
+            {
+              hearts: state.realm.hearts,
+              maxHearts: state.realm.maxHearts,
+              activeHearts: state.realm.activeHearts,
+            },
+            amount
+          );
+          return {
+            ...state,
+            realm: {
+              ...state.realm,
+              ...updatedSystem,
+            },
+          };
+        }),
+
+      resetHearts: () =>
+        set((state) => {
+          const updatedSystem = resetHearts({
+            hearts: state.realm.hearts,
+            maxHearts: state.realm.maxHearts,
+            activeHearts: state.realm.activeHearts,
+          });
+          return {
+            ...state,
+            realm: {
+              ...state.realm,
+              ...updatedSystem,
+            },
+          };
+        }),
 
       updateSavingsProgress: (achieved) =>
-        set((state) => ({
-          ...state,
-          realm: {
-            ...state.realm,
-            savingsAchieved: achieved,
-          },
-        })),
+        set((state) => {
+          const newStatus = calculateRealmStatus(
+            achieved,
+            state.realm.savingsGoal
+          );
+          return {
+            ...state,
+            realm: {
+              ...state.realm,
+              savingsAchieved: achieved,
+              status: newStatus,
+            },
+          };
+        }),
 
       updateTier: (tier) =>
         set((state) => ({
