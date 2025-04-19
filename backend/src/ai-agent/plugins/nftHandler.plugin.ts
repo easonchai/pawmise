@@ -5,7 +5,7 @@ import { SuiWalletClient } from '@goat-sdk/wallet-sui';
 
 // const contractAddress = "0x80a711cc6cc1f06067c915a672861f07c457616acb2570f0d3a7889f6f24847a";
 const contractAddress =
-  '0x1e9ab043a94e004340dcb037eb028cbab3a567aca76f0ee8b0ca0c0fe745b6e4';
+  '0x0b50524fcb74867e27dc364f0cd2d66c4d466b2555933e87dca0bca8689e252d';
 
 const mintNFTParametersSchema = z.object({
   address: z.string().describe('The Address of wallet to mint nft to'),
@@ -43,7 +43,7 @@ const mintNFTMethod = async (
   const tx = new Transaction();
   // TODO: ADD counter object id
   const counterObjectId =
-    '0x16e67d0c9186a41cf1b90bd8d5e6fbdbc2e717628e5eccc2e36e365399b0978f';
+    '0xa97f7ad7e8ade5dc79f5f4dc5533a302b5f9f9db962a25f6bc90028eac2e84ab';
 
   const sender = walletClient.getAddress();
   const { address } = parameters;
