@@ -1,36 +1,37 @@
-import { Chain, PluginBase, createTool } from "@goat-sdk/core";
-import { Transaction } from "@mysten/sui/transactions";
-import { z } from "zod";
-import { SuiWalletClient } from "@goat-sdk/wallet-sui";
+import { Chain, PluginBase, createTool } from '@goat-sdk/core';
+import { Transaction } from '@mysten/sui/transactions';
+import { z } from 'zod';
+import { SuiWalletClient } from '@goat-sdk/wallet-sui';
 
 // const contractAddress = "0x80a711cc6cc1f06067c915a672861f07c457616acb2570f0d3a7889f6f24847a";
-const contractAddress = "0x1e9ab043a94e004340dcb037eb028cbab3a567aca76f0ee8b0ca0c0fe745b6e4";
+const contractAddress =
+  '0x1e9ab043a94e004340dcb037eb028cbab3a567aca76f0ee8b0ca0c0fe745b6e4';
 
 const mintNFTParametersSchema = z.object({
-  address: z.string().describe("The Address of wallet to mint nft to")
+  address: z.string().describe('The Address of wallet to mint nft to'),
   // to: z.string().describe("The recipient's address"),
   // amount: z.number().describe("The amount of SUI to send"),
 });
 
 const upgradeNFTParametersSchema = z.object({
-  nftId: z.string().describe("The ID of the NFT to upgrade"),
+  nftId: z.string().describe('The ID of the NFT to upgrade'),
   // amount: z.number().describe("The amount of SUI to send"),
 });
 
 const updateDescriptionParametersSchema = z.object({
-  nftId: z.string().describe("The ID of the NFT to update description"),
-  description: z.string().describe("The new description of the NFT"),
+  nftId: z.string().describe('The ID of the NFT to update description'),
+  description: z.string().describe('The new description of the NFT'),
   // amount: z.number().describe("The amount of SUI to send"),
 });
 
 const updateImageUrlParametersSchema = z.object({
-  nftId: z.string().describe("The ID of the NFT to update image url"),
-  imageUrl: z.string().describe("The new imageUrl of the NFT"),
+  nftId: z.string().describe('The ID of the NFT to update image url'),
+  imageUrl: z.string().describe('The new imageUrl of the NFT'),
   // amount: z.number().describe("The amount of SUI to send"),
 });
 
 const burnNFTParametersSchema = z.object({
-  nftId: z.string().describe("The ID of the NFT to burn"),
+  nftId: z.string().describe('The ID of the NFT to burn'),
   // amount: z.number().describe("The amount of SUI to send"),
 });
 
@@ -41,10 +42,11 @@ const mintNFTMethod = async (
   // const { to, amount } = parameters;
   const tx = new Transaction();
   // TODO: ADD counter object id
-  const counterObjectId = "0x16e67d0c9186a41cf1b90bd8d5e6fbdbc2e717628e5eccc2e36e365399b0978f";
+  const counterObjectId =
+    '0x16e67d0c9186a41cf1b90bd8d5e6fbdbc2e717628e5eccc2e36e365399b0978f';
 
   const sender = walletClient.getAddress();
-  const {address} = parameters;
+  const { address } = parameters;
   // console.log("ADDRESSSSSSSSSSSSSSSSSS: ", contractAddress)
   tx.setSender(sender);
   const [mintedNFT] = tx.moveCall({
@@ -52,9 +54,9 @@ const mintNFTMethod = async (
     target: `${contractAddress}::pawmise::mint`,
     arguments: [
       tx.object(counterObjectId),
-      tx.pure.string("Forest Realm"), // name
-      tx.pure.string("A magical forest"), // description
-      tx.pure.string("ipfs://forest.png"), // image_url
+      tx.pure.string('Forest Realm'), // name
+      tx.pure.string('A magical forest'), // description
+      tx.pure.string('ipfs://forest.png'), // image_url
       tx.pure.address(address), // creator address (using the wallet's address)
     ],
   });
@@ -63,7 +65,7 @@ const mintNFTMethod = async (
   await tx.build({ client: walletClient.getClient() });
 
   const result = await walletClient.sendTransaction({ transaction: tx });
-  console.log("RESULT: ", result)
+  console.log('RESULT: ', result);
 
   // TODO: Check if this is correct
   await walletClient.getClient().waitForTransaction({ digest: result.hash });
@@ -161,16 +163,16 @@ const burnNFTMethod = async (
 
 export class NftSUIPlugin extends PluginBase<SuiWalletClient> {
   constructor() {
-    super("nftContractTools", []);
+    super('nftContractTools', []);
   }
 
-  supportsChain = (chain: Chain) => chain.type === "sui";
+  supportsChain = (chain: Chain) => chain.type === 'sui';
 
   getTools(walletClient: SuiWalletClient) {
     const mintTool = createTool(
       {
-        name: "mint_nft",
-        description: "Mint a NFT to self",
+        name: 'mint_nft',
+        description: 'Mint a NFT to self',
         parameters: mintNFTParametersSchema,
       },
       // Implement the method
@@ -180,8 +182,8 @@ export class NftSUIPlugin extends PluginBase<SuiWalletClient> {
 
     const upgradeTool = createTool(
       {
-        name: "upgrade_nft",
-        description: "Upgrades a NFT",
+        name: 'upgrade_nft',
+        description: 'Upgrades a NFT',
         parameters: upgradeNFTParametersSchema,
       },
       (parameters: z.infer<typeof upgradeNFTParametersSchema>) =>
@@ -190,8 +192,8 @@ export class NftSUIPlugin extends PluginBase<SuiWalletClient> {
 
     const updateDescriptionTool = createTool(
       {
-        name: "update_nft_description",
-        description: "Updates description of NFT",
+        name: 'update_nft_description',
+        description: 'Updates description of NFT',
         parameters: updateDescriptionParametersSchema,
       },
       (parameters: z.infer<typeof updateDescriptionParametersSchema>) =>
@@ -200,8 +202,8 @@ export class NftSUIPlugin extends PluginBase<SuiWalletClient> {
 
     const updateImageUrlTool = createTool(
       {
-        name: "update_nft_image_url",
-        description: "Updates imageUrl of NFT",
+        name: 'update_nft_image_url',
+        description: 'Updates imageUrl of NFT',
         parameters: updateImageUrlParametersSchema,
       },
       (parameters: z.infer<typeof updateImageUrlParametersSchema>) =>
@@ -210,14 +212,20 @@ export class NftSUIPlugin extends PluginBase<SuiWalletClient> {
 
     const burnTool = createTool(
       {
-        name: "burn_nft",
-        description: "Burns a NFT",
+        name: 'burn_nft',
+        description: 'Burns a NFT',
         parameters: burnNFTParametersSchema,
       },
       (parameters: z.infer<typeof burnNFTParametersSchema>) =>
         burnNFTMethod(walletClient, parameters),
     );
 
-    return [mintTool, upgradeTool, updateDescriptionTool, updateImageUrlTool, burnTool];
+    return [
+      mintTool,
+      upgradeTool,
+      updateDescriptionTool,
+      updateImageUrlTool,
+      burnTool,
+    ];
   }
 }
