@@ -17,9 +17,9 @@ interface CoinStruct {
 
 // const contractAddress = "0x80a711cc6cc1f06067c915a672861f07c457616acb2570f0d3a7889f6f24847a";
 const contractAddress =
-  '0x3ba99780cae8374577a0ad2e128bdb5b6cda3574439fee8288295e0719127084';
+  '0x0b50524fcb74867e27dc364f0cd2d66c4d466b2555933e87dca0bca8689e252d';
 const lendingMarketId =
-  '0xcd279e79afb09db41e18906d64a11b29f9dbcb8f1c5788a7eed9324499f86116';
+  '0x1db44eed61d40769519eac497bc6823dbff87e009a7068110c80e77eb94b9053';
 
 const CLOCK_OBJECT_ID = '0x6'; // System clock object
 
@@ -44,6 +44,12 @@ const redeemParameterSchema = z.object({
   amount: z.number().describe('The amount of tokens to redeem'),
   // marketId: z.string().describe("The lending market object ID")
 });
+
+// const checkDepositParameterSchema = z.object({
+//   humanReadable: z.boolean().describe('Returns in a human readable format'),
+//   // address: z.number().describe('The address to check'),
+//   // marketId: z.string().describe("The lending market object ID")
+// });
 
 // Helper function to get coins of a specific type
 async function getCoinsOfType(walletClient: SuiWalletClient, coinType: string) {
@@ -96,7 +102,7 @@ const depositTokensMethod = async (
 ) => {
   const { amount } = parameters;
   const tx = new Transaction();
-  const actualAmount = amount * 1e9; // Convert to smallest unit (assuming 9 decimals)
+  // const actualAmount = amount * 1e9; // Convert to smallest unit (assuming 9 decimals)
   const marketId = lendingMarketId;
 
   const sender = walletClient.getAddress();
@@ -118,10 +124,10 @@ const depositTokensMethod = async (
     totalBalance += Number(token.balance);
     tokensToUse.push(token.coinObjectId);
 
-    if (totalBalance >= actualAmount) break;
+    if (totalBalance >= amount) break;
   }
 
-  if (totalBalance < actualAmount) {
+  if (totalBalance < amount) {
     throw new Error(
       `Insufficient USDC balance: have ${totalBalance / 1e9}, need ${amount}`,
     );
@@ -135,8 +141,8 @@ const depositTokensMethod = async (
     coinToUse = tx.object(tokensToUse[0]);
 
     // Split the exact amount if needed
-    if (Number(usdcTokens[0].balance) > actualAmount) {
-      [coinToUse] = tx.splitCoins(coinToUse, [actualAmount]);
+    if (Number(usdcTokens[0].balance) > amount) {
+      [coinToUse] = tx.splitCoins(coinToUse, [amount]);
     }
   } else {
     // If we need multiple coins, merge them first
@@ -146,7 +152,7 @@ const depositTokensMethod = async (
     tx.mergeCoins(primaryToken, otherTokens);
 
     // Then split the exact amount needed
-    [coinToUse] = tx.splitCoins(primaryToken, [actualAmount]);
+    [coinToUse] = tx.splitCoins(primaryToken, [amount]);
   }
 
   // Now call the deposit function
@@ -225,6 +231,68 @@ const redeemTokensMethod = async (
   };
 };
 
+// Check deposit method
+// const checkDepositMethod = async (
+//   walletClient: SuiWalletClient,
+//   parameters: z.infer<typeof checkDepositParameterSchema>,
+// ) => {
+//   const { humanReadable } = parameters;
+//   const tx = new Transaction();
+//   const marketId = lendingMarketId;
+//   const sender = walletClient.getAddress();
+//   tx.setSender(sender);
+//
+//   // Call the get_user_deposit function
+//   tx.moveCall({
+//     target: `${contractAddress}::lending_market::get_user_deposit`,
+//     typeArguments: [
+//       `${contractAddress}::pawmise::PAWMISE`,
+//       `${contractAddress}::usdc::USDC`,
+//     ],
+//     arguments: [
+//       tx.object(marketId), // lending market
+//       tx.pure.address(sender), // user address
+//     ],
+//   });
+//
+//   // Build and send the transaction
+//   await tx.build({ client: walletClient.getClient() });
+//   const result = await walletClient.sendTransaction({ transaction: tx });
+//   await walletClient.getClient().waitForTransaction({ digest: result.hash });
+//
+//   // Get the transaction effects to extract the return value
+//   const effects = await walletClient.getClient().getTransactionBlock({
+//     digest: result.hash,
+//     options: {
+//       showEffects: true,
+//     },
+//   });
+//
+//   if (
+//     !effects.effects ||
+//     !effects.effects.status ||
+//     effects.effects.status.status !== 'success'
+//   ) {
+//     throw new Error('Failed to get deposit amount');
+//   }
+//
+//   // Extract the return value from the effects
+//   const returnValue = effects.effects.transactionDigest?.[0]?.[0];
+//   if (!returnValue) {
+//     throw new Error('No return value found');
+//   }
+//
+//   // Convert the return value to a number
+//   const amount = Number(returnValue);
+//
+//   return {
+//     success: true,
+//     txHash: result.hash,
+//     amount: humanReadable ? amount / 1e9 : amount, // Convert to human readable if requested
+//     marketId: marketId,
+//   };
+// };
+
 export class USDCTokenPlugin extends PluginBase<SuiWalletClient> {
   constructor() {
     super('usdcContractTools', []);
@@ -265,6 +333,17 @@ export class USDCTokenPlugin extends PluginBase<SuiWalletClient> {
       (parameters: z.infer<typeof redeemParameterSchema>) =>
         redeemTokensMethod(walletClient, parameters),
     );
+
+    // const checkDepositTool = createTool(
+    //   {
+    //     name: 'check_deposit',
+    //     description: 'Check the amount of tokens deposited by the user',
+    //     parameters: checkDepositParameterSchema,
+    //   },
+    //   // Implement the method
+    //   (parameters: z.infer<typeof checkDepositParameterSchema>) =>
+    //     checkDepositMethod(walletClient, parameters),
+    // );
 
     return [mintTokenTool, stakeTokenTool, redeemTokenTool];
   }
