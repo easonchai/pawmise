@@ -31,5 +31,7 @@ export const apiService = {
       api.post(`ai-agent/${userAddress}`, payload),
     emergencyWithdrawal: (address: string) =>
       api.post(`ai-agent/${address}/emergency-withdrawal`),
+    stakeAllTokens: (address: string) =>
+      api.post(`ai-agent/${address}/stake-all-tokens`),
   },
 };

@@ -109,4 +109,31 @@ export class AiAgentController {
       };
     }
   }
+
+  @Post(':userAddress/stake-all-tokens')
+  async stakeAllTokens(@Param('userAddress') userAddress: string) {
+    this.logger.log(`Staking all tokens requested for: ${userAddress}`);
+
+    try {
+      const result = await this.aiAgentService.processStakeAllTokens(
+        userAddress as `0x${string}`,
+      );
+
+      return {
+        success: result.success,
+        message: result.message,
+        txHash: result.txHash,
+        amount: result.amount,
+      };
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      this.logger.error(`Error staking all tokens: ${errorMessage}`);
+
+      return {
+        success: false,
+        error: 'Failed to stake tokens',
+      };
+    }
+  }
 }
