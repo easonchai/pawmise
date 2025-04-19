@@ -8,9 +8,10 @@ import { Dialog } from "@/components/ui/dialog";
 
 interface BottomNavProps {
   currentPath: string;
+  onChatClick?: () => void;
 }
 
-export function BottomNav({ currentPath }: BottomNavProps) {
+export function BottomNav({ currentPath, onChatClick }: BottomNavProps) {
   const router = useRouter();
   const [emergencyOpen, setEmergencyOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -53,7 +54,7 @@ export function BottomNav({ currentPath }: BottomNavProps) {
       <nav className="fixed bottom-0 left-0 right-0 flex justify-between items-center bg-[#F6D998] py-4 px-6 border-t-2 border-[#392E1F]">
         <div
           className="flex-1 flex flex-col items-center justify-center cursor-pointer"
-          onClick={() => router.push("/chat")}
+          onClick={onChatClick}
         >
           <Image
             src="/icons/chat.png"
