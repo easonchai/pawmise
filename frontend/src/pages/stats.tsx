@@ -1,3 +1,5 @@
+"use client"
+
 import { NextPage } from "next";
 import { useRouter } from "next/router";
 import { useAppStore } from "@/store";
@@ -17,12 +19,12 @@ const StatsPage: NextPage = () => {
     {
       name: "saved",
       value: realm.savingsAchieved,
-      color: "#4CAF50",
+      color: "#3E9615",
     },
     {
       name: "remaining",
       value: realm.savingsGoal - realm.savingsAchieved,
-      color: "#E2E8F0",
+      color: "#BE9554",
     },
   ];
 
@@ -65,8 +67,9 @@ const StatsPage: NextPage = () => {
                 cy="50%"
                 innerRadius={60}
                 outerRadius={80}
-                paddingAngle={5}
+                paddingAngle={0}
                 dataKey="value"
+                stroke="#392E1F"
               >
                 {chartData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.color} />
@@ -74,7 +77,7 @@ const StatsPage: NextPage = () => {
                 <Label
                   value={`${savingsPercentage}%`}
                   position="center"
-                  className="text-3xl font-bold"
+                  className="text-3xl font-bold fill-[#392E1F]"
                 />
               </Pie>
             </PieChart>
