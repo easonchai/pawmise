@@ -57,20 +57,16 @@ export function RadialFab({
             visibleOptions.map((option, i) => {
               // Calculate position in a semi-circle
               const angle = (Math.PI / (visibleOptions.length + 1)) * (i + 1);
-              const x = Math.cos(angle) * radius;
+              const x = -Math.cos(angle) * radius;
               const y = -Math.sin(angle) * radius;
 
               return (
                 <motion.button
-                  key={i}
+                  key={visibleOptions.length - 1 - i}
                   className={cn(
                     "absolute flex h-16 w-16 items-center justify-center rounded-full shadow-lg bg-[#392E1F] text-primary-foreground",
                     optionClassName
                   )}
-                  style={{
-                    bottom: "8px",
-                    right: "8px",
-                  }}
                   initial={{ opacity: 0, y: 0, x: 0 }}
                   animate={{
                     opacity: 1,
