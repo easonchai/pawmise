@@ -49,17 +49,15 @@ const AppPage: NextPage = () => {
         try {
           setIsDataLoading(true);
 
-          // Fetch user data by wallet address
           const userResponse = await apiService.user.getUser(account.address);
           const userData = userResponse.data;
 
           if (userData) {
             console.log("User data:", userData);
 
-            // Convert savings goal from cents to dollars (if stored as cents)
             const savingsGoal = parseFloat(userData.savingsGoal);
+            console.log("Savings goal ($):", savingsGoal);
 
-            // Use our new endpoint to get the active pet for this user
             try {
               const petResponse = await apiService.pet.getActivePetByUserId(
                 userData.id
@@ -69,8 +67,13 @@ const AppPage: NextPage = () => {
               if (petData) {
                 console.log("Active pet data:", petData);
 
-                // Parse the balance (savings achieved)
-                const savingsAchieved = parseFloat(petData.balance);
+                const savingsAchieved = parseFloat(petData.balance) / 1000000000;
+                console.log("Raw balance from DB:", petData.balance);
+                console.log("Converted savings achieved ($):", savingsAchieved);
+                console.log(
+                  "Calculated percentage:",
+                  (savingsAchieved / savingsGoal) * 100
+                );
 
                 // Calculate realm status
                 const realmStatus = calculateRealmStatus(
