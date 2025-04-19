@@ -2,12 +2,23 @@ import { Chain, PluginBase, createTool } from '@goat-sdk/core';
 import { Transaction } from '@mysten/sui/transactions';
 import { z } from 'zod';
 import { SuiWalletClient } from '@goat-sdk/wallet-sui';
+import { PrismaClient } from '@prisma/client';
 
 const COMMON_TOKENS = {
   SUI: '0x2::sui::SUI',
   USDC: '0x0b50524fcb74867e27dc364f0cd2d66c4d466b2555933e87dca0bca8689e252d::usdc::USDC', // Example address
   USDT: '0x0b50524fcb74867e27dc364f0cd2d66c4d466b2555933e87dca0bca8689e252d::coin::COIN', // Example address
 } as const;
+
+const prisma = new PrismaClient();
+
+interface TransactionResult {
+  effects?: {
+    status: {
+      status: string;
+    };
+  };
+}
 
 // ---------------------HELPER FUNCTIONS-------------------------------
 async function getCoinsOfType(walletClient: SuiWalletClient, coinType: string) {
@@ -145,62 +156,53 @@ const sendTokenMethod = async (
     }
   }
 
-  // Build and send the transaction
-  return walletClient.sendTransaction({
-    transaction: tx,
-  });
-};
+  try {
+    // Build and send the transaction
+    const txResponse = await walletClient.sendTransaction({
+      transaction: tx,
+    });
+    const result = await walletClient.getClient().getTransactionBlock({
+      digest: txResponse.hash,
+      options: {
+        showEffects: true,
+        showEvents: true,
+        showObjectChanges: true,
+      },
+    });
+    console.log(result);
+    // console.log('TRANSACTION RES: ', result.effects);
+    // console.log('effects RES: ', result.effects?.status);
+    console.log('effects RES stats: ', result.effects?.status.status);
 
-// const sendTokenMethod = async (
-//   walletClient: SuiWalletClient,
-//   parameters: z.infer<typeof sendSUIParametersSchema>,
-// ) => {
-//   const { to, amount, tokenType } = parameters;
-//   const tx = new Transaction();
-//   tx.setSender(walletClient.getAddress());
-//
-//   const actualTokenType = COMMON_TOKENS[tokenType];
-//   const tokens = await getCoinsOfType(walletClient, actualTokenType);
-//
-//   if (tokens.length === 0) {
-//     throw new Error(`No ${tokenType} tokens found in wallet`);
-//   }
-//
-//   let totalBalance = 0;
-//   const tokensToUse = [];
-//
-//   for (const token of tokens) {
-//     totalBalance += Number(token.balance);
-//     tokensToUse.push(token.coinObjectId);
-//
-//     if (totalBalance >= amount) break;
-//   }
-//
-//   if (totalBalance < amount) {
-//     throw new Error(
-//       `Insufficient ${tokenType} balance: have ${totalBalance}, need ${amount}`,
-//     );
-//   }
-//
-//   if (tokensToUse.length === 1) {
-//     const [splitToken] = tx.splitCoins(tx.object(tokensToUse[0]), [amount]);
-//     tx.transferObjects([splitToken], to);
-//   } else {
-//     const primaryToken = tx.object(tokensToUse[0]);
-//     const otherTokens = tokensToUse.slice(1).map((id) => tx.object(id));
-//
-//     tx.mergeCoins(primaryToken, otherTokens);
-//     const [splitToken] = tx.splitCoins(primaryToken, [amount]);
-//     tx.transferObjects([splitToken], to);
-//   }
-//
-//   // const [coin] = tx.splitCoins(tx.gas, [amount]);
-//   // tx.transferObjects([coin], to);
-//   await tx.build({ client: walletClient.getClient() });
-//   return walletClient.sendTransaction({
-//     transaction: tx,
-//   });
-// };
+    // If the transaction was successful and it's a USDC transfer, update the pet's balance
+    if (result.effects?.status.status === 'success' && tokenType === 'USDC') {
+      try {
+        console.log('SAVING TO DB');
+        // Get the pet's ID from the database using the recipient address
+        const pet = await prisma.pet.findUnique({
+          where: { walletAddress: walletClient.getAddress() },
+        });
+
+        if (pet) {
+          // Update the pet's balance
+          await prisma.pet.update({
+            where: { id: pet.id },
+            data: {
+              balance: (BigInt(pet.balance) - BigInt(amount)).toString(),
+            },
+          });
+        }
+      } catch (error) {
+        console.error('Error updating pet balance:', error);
+      }
+    }
+
+    return result;
+  } catch (error) {
+    console.error('Error sending transaction:', error);
+    throw error;
+  }
+};
 
 const viewBalanceMethod = async (
   walletClient: SuiWalletClient,

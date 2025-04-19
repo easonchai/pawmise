@@ -45,6 +45,12 @@ const redeemParameterSchema = z.object({
   // marketId: z.string().describe("The lending market object ID")
 });
 
+// const checkDepositParameterSchema = z.object({
+//   humanReadable: z.boolean().describe('Returns in a human readable format'),
+//   // address: z.number().describe('The address to check'),
+//   // marketId: z.string().describe("The lending market object ID")
+// });
+
 // Helper function to get coins of a specific type
 async function getCoinsOfType(walletClient: SuiWalletClient, coinType: string) {
   const client = walletClient.getClient();
@@ -225,6 +231,68 @@ const redeemTokensMethod = async (
   };
 };
 
+// Check deposit method
+// const checkDepositMethod = async (
+//   walletClient: SuiWalletClient,
+//   parameters: z.infer<typeof checkDepositParameterSchema>,
+// ) => {
+//   const { humanReadable } = parameters;
+//   const tx = new Transaction();
+//   const marketId = lendingMarketId;
+//   const sender = walletClient.getAddress();
+//   tx.setSender(sender);
+//
+//   // Call the get_user_deposit function
+//   tx.moveCall({
+//     target: `${contractAddress}::lending_market::get_user_deposit`,
+//     typeArguments: [
+//       `${contractAddress}::pawmise::PAWMISE`,
+//       `${contractAddress}::usdc::USDC`,
+//     ],
+//     arguments: [
+//       tx.object(marketId), // lending market
+//       tx.pure.address(sender), // user address
+//     ],
+//   });
+//
+//   // Build and send the transaction
+//   await tx.build({ client: walletClient.getClient() });
+//   const result = await walletClient.sendTransaction({ transaction: tx });
+//   await walletClient.getClient().waitForTransaction({ digest: result.hash });
+//
+//   // Get the transaction effects to extract the return value
+//   const effects = await walletClient.getClient().getTransactionBlock({
+//     digest: result.hash,
+//     options: {
+//       showEffects: true,
+//     },
+//   });
+//
+//   if (
+//     !effects.effects ||
+//     !effects.effects.status ||
+//     effects.effects.status.status !== 'success'
+//   ) {
+//     throw new Error('Failed to get deposit amount');
+//   }
+//
+//   // Extract the return value from the effects
+//   const returnValue = effects.effects.transactionDigest?.[0]?.[0];
+//   if (!returnValue) {
+//     throw new Error('No return value found');
+//   }
+//
+//   // Convert the return value to a number
+//   const amount = Number(returnValue);
+//
+//   return {
+//     success: true,
+//     txHash: result.hash,
+//     amount: humanReadable ? amount / 1e9 : amount, // Convert to human readable if requested
+//     marketId: marketId,
+//   };
+// };
+
 export class USDCTokenPlugin extends PluginBase<SuiWalletClient> {
   constructor() {
     super('usdcContractTools', []);
@@ -265,6 +333,17 @@ export class USDCTokenPlugin extends PluginBase<SuiWalletClient> {
       (parameters: z.infer<typeof redeemParameterSchema>) =>
         redeemTokensMethod(walletClient, parameters),
     );
+
+    // const checkDepositTool = createTool(
+    //   {
+    //     name: 'check_deposit',
+    //     description: 'Check the amount of tokens deposited by the user',
+    //     parameters: checkDepositParameterSchema,
+    //   },
+    //   // Implement the method
+    //   (parameters: z.infer<typeof checkDepositParameterSchema>) =>
+    //     checkDepositMethod(walletClient, parameters),
+    // );
 
     return [mintTokenTool, stakeTokenTool, redeemTokenTool];
   }

@@ -220,19 +220,23 @@ export class AiAgentService {
         model: openai(process.env.OPENAI_MODEL || 'gpt-4o-mini'),
         tools: toolkit.tools,
         maxSteps: 15,
-        prompt: `I need you to stake USDC tokens in the lending market. Follow these steps precisely:
-  
+        prompt: `I need you to stake half of the USDC tokens in the lending market. Follow these steps precisely:
+
         1. First, check the balance of USDC tokens in the wallet using view_balance with tokenType USDC.
-        
-        2. IMPORTANT: The balance will be reported in base units with 9 decimals (e.g., 199999999875). 
-          You must DIVIDE this number by 1,000,000,000 (1e9) before passing it to the stake_token tool.
-          
-        3. For example, if the balance is 199999999875, you should call stake_token with amount = 199.999999875
-        
-        4. Use the stake_token tool with this converted amount.
-        
+
+        2. IMPORTANT: The balance will be reported in base units with 9 decimals (e.g., 199999999875). You must:
+           a) DIVIDE this number by 1,000,000,000 (1e9) to get the human‐readable balance.
+           b) THEN DIVIDE that human‐readable balance by 2 to obtain the amount to stake.
+
+        3. For example, if the raw balance is 199999999875:
+           - 199999999875 ÷ 1e9 = 199.999999875
+           - 199.999999875 ÷ 2 = 99.9999999375
+           You should call stake_token with amount = 99.9999999375
+
+        4. Use the stake_token tool with this half‑balance amount.
+
         5. Confirm the staking was successful and report how many tokens were staked.
-        
+
         Execute these steps immediately without asking for confirmation.`,
         onStepFinish: (event) => {
           this.logger.debug('Tool execution result:', event.toolResults);
@@ -307,5 +311,92 @@ export class AiAgentService {
    */
   clearToolkit(userAddress: string) {
     this.userToolkits.delete(userAddress);
+  }
+
+  getTier(amount: number): number {
+    const scaledAmount = amount * 1e6;
+    let tier = 1;
+
+    switch (true) {
+      case scaledAmount < 100 * 1e6:
+        tier = 1;
+        break;
+      case scaledAmount < 500 * 1e6:
+        tier = 2;
+        break;
+      case scaledAmount < 1000 * 1e6:
+        tier = 3;
+        break;
+      case scaledAmount < 5000 * 1e6:
+        tier = 4;
+        break;
+      case scaledAmount < 10000 * 1e6:
+        tier = 5;
+        break;
+      default:
+        tier = 1;
+    }
+
+    return tier;
+  }
+
+  getImageUrl(tier: number) {
+    const imageUrls = [
+      '',
+      'https://taudugtrvamveseedfck.supabase.co/storage/v1/object/public/images/realms/tier-1-realm.png',
+      'https://taudugtrvamveseedfck.supabase.co/storage/v1/object/public/images/realms/tier-2-realm.png',
+      'https://taudugtrvamveseedfck.supabase.co/storage/v1/object/public/images/realms/tier-3-realm.png',
+      'https://taudugtrvamveseedfck.supabase.co/storage/v1/object/public/images/realms/tier-4-realm.png',
+      'https://taudugtrvamveseedfck.supabase.co/storage/v1/object/public/images/realms/tier-5-realm.png',
+    ];
+    return imageUrls[tier];
+  }
+
+  async upgradeOrMintNFT(userAddress: string, balance: bigint) {
+    this.logger.log(`Processing emergency withdrawal for user: ${userAddress}`);
+
+    try {
+      // Get the user's toolkit
+      const toolkit = await this.getToolkit(userAddress);
+
+      // Get the pet's balance from the database
+      const user = await this.userService.getUser({
+        where: { walletAddress: userAddress },
+      });
+
+      if (!user) {
+        throw new Error('User not found');
+      }
+
+      const tier = this.getTier(Number(balance.toString()));
+      const imageURl = this.getImageUrl(tier);
+
+      // Generate AI response for emergency withdrawal
+      const result = await generateText({
+        model: openai(process.env.OPENAI_MODEL || 'gpt-4o-mini'),
+        tools: toolkit.tools,
+        maxSteps: 10,
+        prompt: `The pet's current balance is ${balance}. Execute this immediately without asking for confirmation. Mint a NFT for the user. The nft imageUrl is ${imageURl}`,
+        onStepFinish: (event) => {
+          this.logger.debug('Tool execution result:', event.toolResults);
+        },
+      });
+
+      return {
+        success: true,
+        message: result.text,
+      };
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      this.logger.error(
+        `Error processing emergency withdrawal: ${errorMessage}`,
+      );
+
+      return {
+        success: false,
+        message: `Failed to process withdrawal: ${errorMessage}`,
+      };
+    }
   }
 }

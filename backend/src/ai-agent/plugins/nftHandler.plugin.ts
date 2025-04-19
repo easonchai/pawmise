@@ -9,6 +9,7 @@ const contractAddress =
 
 const mintNFTParametersSchema = z.object({
   address: z.string().describe('The Address of wallet to mint nft to'),
+  imageUrl: z.string().describe('The image URL of the nft'),
   // to: z.string().describe("The recipient's address"),
   // amount: z.number().describe("The amount of SUI to send"),
 });
@@ -46,7 +47,7 @@ const mintNFTMethod = async (
     '0xa97f7ad7e8ade5dc79f5f4dc5533a302b5f9f9db962a25f6bc90028eac2e84ab';
 
   const sender = walletClient.getAddress();
-  const { address } = parameters;
+  const { address, imageUrl } = parameters;
   // console.log("ADDRESSSSSSSSSSSSSSSSSS: ", contractAddress)
   tx.setSender(sender);
   const [mintedNFT] = tx.moveCall({
@@ -56,7 +57,10 @@ const mintNFTMethod = async (
       tx.object(counterObjectId),
       tx.pure.string('Forest Realm'), // name
       tx.pure.string('A magical forest'), // description
-      tx.pure.string('ipfs://forest.png'), // image_url
+      tx.pure.string(
+        imageUrl,
+        // 'https://taudugtrvamveseedfck.supabase.co/storage/v1/object/public/images/realms/tier-1-realm.png',
+      ), // image_url
       tx.pure.address(address), // creator address (using the wallet's address)
     ],
   });
