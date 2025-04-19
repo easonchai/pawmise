@@ -96,7 +96,7 @@ const depositTokensMethod = async (
 ) => {
   const { amount } = parameters;
   const tx = new Transaction();
-  const actualAmount = amount * 1e9; // Convert to smallest unit (assuming 9 decimals)
+  // const actualAmount = amount * 1e9; // Convert to smallest unit (assuming 9 decimals)
   const marketId = lendingMarketId;
 
   const sender = walletClient.getAddress();
@@ -118,10 +118,10 @@ const depositTokensMethod = async (
     totalBalance += Number(token.balance);
     tokensToUse.push(token.coinObjectId);
 
-    if (totalBalance >= actualAmount) break;
+    if (totalBalance >= amount) break;
   }
 
-  if (totalBalance < actualAmount) {
+  if (totalBalance < amount) {
     throw new Error(
       `Insufficient USDC balance: have ${totalBalance / 1e9}, need ${amount}`,
     );
@@ -135,8 +135,8 @@ const depositTokensMethod = async (
     coinToUse = tx.object(tokensToUse[0]);
 
     // Split the exact amount if needed
-    if (Number(usdcTokens[0].balance) > actualAmount) {
-      [coinToUse] = tx.splitCoins(coinToUse, [actualAmount]);
+    if (Number(usdcTokens[0].balance) > amount) {
+      [coinToUse] = tx.splitCoins(coinToUse, [amount]);
     }
   } else {
     // If we need multiple coins, merge them first
@@ -146,7 +146,7 @@ const depositTokensMethod = async (
     tx.mergeCoins(primaryToken, otherTokens);
 
     // Then split the exact amount needed
-    [coinToUse] = tx.splitCoins(primaryToken, [actualAmount]);
+    [coinToUse] = tx.splitCoins(primaryToken, [amount]);
   }
 
   // Now call the deposit function
