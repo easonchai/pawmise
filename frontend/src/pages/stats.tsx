@@ -39,9 +39,9 @@ const StatsPage: NextPage = () => {
 
   // Mock transaction history
   const transactions = [
-    { date: "16/2/25", hash: "0x....smtfg", amount: 250 },
-    { date: "16/2/25", hash: "0x....smtfg", amount: 250 },
-    { date: "16/2/25", hash: "0x....smtfg", amount: 250 },
+    { date: "19/4/25", hash: "0x....a4e1", amount: 50 },
+    { date: "17/4/25", hash: "0x....tl5e", amount: 300 },
+    { date: "16/4/25", hash: "0x....7r33", amount: 150 },
   ];
 
   return (
