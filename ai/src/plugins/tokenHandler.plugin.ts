@@ -57,7 +57,7 @@ async function getTokenMetadata(
 }
 
 // NOTE: This is in mist or whatever it is, so have to multiply 1e9
-const sendSUIParametersSchema = z.object({
+const sendTokenParametersSchema = z.object({
   to: z.string().describe("The recipient's address"),
   amount: z.number().describe("The amount of token to send"),
   tokenType: z
@@ -83,53 +83,119 @@ const viewBalanceParametersSchema = z.object({
 
 const sendTokenMethod = async (
   walletClient: SuiWalletClient,
-  parameters: z.infer<typeof sendSUIParametersSchema>,
+  parameters: z.infer<typeof sendTokenParametersSchema>,
 ) => {
   const { to, amount, tokenType } = parameters;
   const tx = new Transaction();
-
-  const actualTokenType = COMMON_TOKENS[tokenType];
-  const tokens = await getCoinsOfType(walletClient, actualTokenType);
-
-  if (tokens.length === 0) {
-    throw new Error(`No ${tokenType} tokens found in wallet`);
-  }
-
-  let totalBalance = 0;
-  const tokensToUse = [];
-
-  for (const token of tokens) {
-    totalBalance += Number(token.balance);
-    tokensToUse.push(token.coinObjectId);
-
-    if (totalBalance >= amount) break;
-  }
-
-  if (totalBalance < amount) {
-    throw new Error(
-      `Insufficient ${tokenType} balance: have ${totalBalance}, need ${amount}`,
-    );
-  }
-
-  if (tokensToUse.length === 1) {
-    const [splitToken] = tx.splitCoins(tx.object(tokensToUse[0]), [amount]);
-    tx.transferObjects([splitToken], to);
+  
+  // For SUI tokens, use the simpler approach
+  if (tokenType === "SUI") {
+    // Simple SUI transfer using gas object
+    const [coin] = tx.splitCoins(tx.gas, [amount]);
+    tx.transferObjects([coin], to);
   } else {
-    const primaryToken = tx.object(tokensToUse[0]);
-    const otherTokens = tokensToUse.slice(1).map((id) => tx.object(id));
-
-    tx.mergeCoins(primaryToken, otherTokens);
-    const [splitToken] = tx.splitCoins(primaryToken, [amount]);
-    tx.transferObjects([splitToken], to);
+    // For other tokens, we need to look them up first
+    const actualTokenType = COMMON_TOKENS[tokenType];
+    const tokens = await getCoinsOfType(walletClient, actualTokenType);
+    
+    if (tokens.length === 0) {
+      throw new Error(`No ${tokenType} tokens found in wallet`);
+    }
+    
+    // Use the first coin object that has enough balance
+    const suitableCoin = tokens.find(token => Number(token.balance) >= amount);
+    
+    if (suitableCoin) {
+      // If we found a single coin with enough balance, use it directly
+      const [splitToken] = tx.splitCoins(tx.object(suitableCoin.coinObjectId), [amount]);
+      tx.transferObjects([splitToken], to);
+    } else {
+      // If no single coin has enough, merge coins until we have enough
+      let totalBalance = 0;
+      const tokensToUse = [];
+      
+      // Find coins to merge until we have enough balance
+      for (const token of tokens) {
+        totalBalance += Number(token.balance);
+        tokensToUse.push(token.coinObjectId);
+        
+        if (totalBalance >= amount) break;
+      }
+      
+      if (totalBalance < amount) {
+        throw new Error(
+          `Insufficient ${tokenType} balance: have ${totalBalance}, need ${amount}`
+        );
+      }
+      
+      // Merge coins and split the amount
+      const primaryToken = tx.object(tokensToUse[0]);
+      if (tokensToUse.length > 1) {
+        const otherTokens = tokensToUse.slice(1).map(id => tx.object(id));
+        tx.mergeCoins(primaryToken, otherTokens);
+      }
+      
+      const [splitToken] = tx.splitCoins(primaryToken, [amount]);
+      tx.transferObjects([splitToken], to);
+    }
   }
-
-  // const [coin] = tx.splitCoins(tx.gas, [amount]);
-  // tx.transferObjects([coin], to);
-  await tx.build({ client: walletClient.getClient() });
+  
+  // Build and send the transaction
   return walletClient.sendTransaction({
     transaction: tx,
   });
 };
+
+// const sendTokenMethod = async (
+//   walletClient: SuiWalletClient,
+//   parameters: z.infer<typeof sendSUIParametersSchema>,
+// ) => {
+//   const { to, amount, tokenType } = parameters;
+//   const tx = new Transaction();
+//   tx.setSender(walletClient.getAddress());
+//
+//   const actualTokenType = COMMON_TOKENS[tokenType];
+//   const tokens = await getCoinsOfType(walletClient, actualTokenType);
+//
+//   if (tokens.length === 0) {
+//     throw new Error(`No ${tokenType} tokens found in wallet`);
+//   }
+//
+//   let totalBalance = 0;
+//   const tokensToUse = [];
+//
+//   for (const token of tokens) {
+//     totalBalance += Number(token.balance);
+//     tokensToUse.push(token.coinObjectId);
+//
+//     if (totalBalance >= amount) break;
+//   }
+//
+//   if (totalBalance < amount) {
+//     throw new Error(
+//       `Insufficient ${tokenType} balance: have ${totalBalance}, need ${amount}`,
+//     );
+//   }
+//
+//   if (tokensToUse.length === 1) {
+//     const [splitToken] = tx.splitCoins(tx.object(tokensToUse[0]), [amount]);
+//     tx.transferObjects([splitToken], to);
+//   } else {
+//     const primaryToken = tx.object(tokensToUse[0]);
+//     const otherTokens = tokensToUse.slice(1).map((id) => tx.object(id));
+//
+//     tx.mergeCoins(primaryToken, otherTokens);
+//     const [splitToken] = tx.splitCoins(primaryToken, [amount]);
+//     tx.transferObjects([splitToken], to);
+//   }
+//
+//   // const [coin] = tx.splitCoins(tx.gas, [amount]);
+//   // tx.transferObjects([coin], to);
+//   await tx.build({ client: walletClient.getClient() });
+//   return walletClient.sendTransaction({
+//     transaction: tx,
+//   });
+// };
 
 const viewBalanceMethod = async (
   walletClient: SuiWalletClient,
@@ -167,7 +233,7 @@ const viewBalanceMethod = async (
   };
 };
 
-export class SendSUIPlugin extends PluginBase<SuiWalletClient> {
+export class TokenPlugin extends PluginBase<SuiWalletClient> {
   constructor() {
     super("tokenTools", []);
   }
@@ -179,10 +245,10 @@ export class SendSUIPlugin extends PluginBase<SuiWalletClient> {
       {
         name: "send_tokens",
         description: "Send tokens to an address.",
-        parameters: sendSUIParametersSchema,
+        parameters: sendTokenParametersSchema,
       },
       // Implement the method
-      (parameters: z.infer<typeof sendSUIParametersSchema>) =>
+      (parameters: z.infer<typeof sendTokenParametersSchema>) =>
         sendTokenMethod(walletClient, parameters),
     );
     const viewBalanceTool = createTool(
