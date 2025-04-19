@@ -1,5 +1,8 @@
 import { Chain, PluginBase, createTool } from '@goat-sdk/core';
-import { Transaction, TransactionObjectArgument } from '@mysten/sui/transactions';
+import {
+  Transaction,
+  TransactionObjectArgument,
+} from '@mysten/sui/transactions';
 import { z } from 'zod';
 import { SuiWalletClient } from '@goat-sdk/wallet-sui';
 
