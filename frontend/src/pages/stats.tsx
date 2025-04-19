@@ -126,7 +126,10 @@ const StatsPage: NextPage = () => {
       </div>
 
       {/* Bottom Navigation */}
-      <BottomNav currentPath={router.pathname} />
+      <BottomNav
+        currentPath={router.pathname}
+        onChatClick={() => router.push("/app")}
+      />
     </div>
   );
 };
