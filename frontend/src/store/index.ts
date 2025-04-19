@@ -44,7 +44,7 @@ const initialState: AppState = {
   walletAddress: null,
 
   // User Profile
-  savingsGoal: "25000",
+  // savingsGoal: "25000",
   selectedDog: {
     breed: "Pomeranian",
     name: "Luna",

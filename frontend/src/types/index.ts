@@ -1,6 +1,7 @@
 import { RealmStatus } from "@/lib/realm";
 
 export interface Dog {
+  id?: string;
   breed: string;
   name: string;
   image: string;
@@ -25,7 +26,7 @@ export interface Settings {
 
 export interface UserState {
   walletAddress: string | null;
-  savingsGoal: string;
+  // savingsGoal: string;
   selectedDog: Dog | null;
   userName: string;
   isOnboarded: boolean;
