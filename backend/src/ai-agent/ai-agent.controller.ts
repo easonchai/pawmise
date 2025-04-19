@@ -81,4 +81,59 @@ export class AiAgentController {
       success: wasDeleted,
     };
   }
+
+  @Post(':userAddress/emergency-withdrawal')
+  async triggerEmergencyWithdrawal(@Param('userAddress') userAddress: string) {
+    this.logger.log(`Emergency withdrawal requested for: ${userAddress}`);
+
+    try {
+      const result = await this.aiAgentService.processEmergencyWithdrawal(
+        userAddress as `0x${string}`,
+      );
+
+      return {
+        success: result.success,
+        message: result.message,
+        txHash: result.txHash,
+      };
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      this.logger.error(
+        `Error processing emergency withdrawal: ${errorMessage}`,
+      );
+
+      return {
+        success: false,
+        error: 'Failed to process emergency withdrawal',
+      };
+    }
+  }
+
+  @Post(':userAddress/stake-all-tokens')
+  async stakeAllTokens(@Param('userAddress') userAddress: string) {
+    this.logger.log(`Staking all tokens requested for: ${userAddress}`);
+
+    try {
+      const result = await this.aiAgentService.processStakeAllTokens(
+        userAddress as `0x${string}`,
+      );
+
+      return {
+        success: result.success,
+        message: result.message,
+        txHash: result.txHash,
+        amount: result.amount,
+      };
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      this.logger.error(`Error staking all tokens: ${errorMessage}`);
+
+      return {
+        success: false,
+        error: 'Failed to stake tokens',
+      };
+    }
+  }
 }

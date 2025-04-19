@@ -90,7 +90,7 @@ const AppPage: NextPage = () => {
 
                 // Update selected dog in store with accurate data
                 setSelectedDog({
-                  // id: petData.id,
+                  id: petData.id,
                   breed: petData.breed.toLowerCase(),
                   name: petData.name,
                   image: `/dogs/${petData.breed.toLowerCase()}.png`,
@@ -135,6 +135,10 @@ const AppPage: NextPage = () => {
   }, [isChatActive, messages.length, userName]);
 
   const handleSendMessage = async (content: string) => {
+    if (!account) {
+      console.error("No account connected");
+      return;
+    }
     // Add user message immediately
     const userMessage: Message = {
       id: generateMessageId(),
@@ -147,7 +151,7 @@ const AppPage: NextPage = () => {
 
     try {
       // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      // await new Promise((resolve) => setTimeout(resolve, 1500));
       // TODO: Replace with actual API call
       // const response = await fetch("/api/chat", {
       //   method: "POST",
@@ -160,14 +164,13 @@ const AppPage: NextPage = () => {
       //   }),
       // });
 
-      const data = {
-        response: "Hello!",
-      };
+      const response = await apiService.ai.chat(account?.address, {message: content})
+      const data = response.data;
 
       // Add dog's response
       const dogResponse: Message = {
         id: generateMessageId(),
-        content: data.response,
+        content: data.message,
         isUser: false,
       };
       setMessages((prev) => [...prev, dogResponse]);

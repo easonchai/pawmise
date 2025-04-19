@@ -9,6 +9,7 @@ import {
 import { PetService } from './pet.service';
 import { Prisma } from '@prisma/client';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { UpdateBalanceDto } from './dto/petRequestDto';
 
 @ApiTags('pet')
 @Controller('pet')
@@ -48,5 +49,14 @@ export class PetController {
     }
 
     return pet;
+  }
+
+  @Post('updateBalance')
+  @ApiOperation({ summary: 'Get active pet for a user' })
+  async updatePetBalance(@Body() updateBalanceDto: UpdateBalanceDto) {
+    return await this.petService.updatePetBalance(
+      updateBalanceDto.id,
+      updateBalanceDto.amount,
+    );
   }
 }
