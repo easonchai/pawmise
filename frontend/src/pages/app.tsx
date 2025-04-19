@@ -3,18 +3,107 @@ import Image from "next/image";
 import { useRouter } from "next/router";
 import { useAppStore } from "@/store";
 import { BottomNav } from "@/components/bottom-nav";
+import { useState, useRef, useEffect } from "react";
+import { MessageBubble } from "@/components/chat/message-bubble";
+import { ChatInput } from "@/components/chat/chat-input";
+import { cn } from "@/lib/utils";
+
+interface Message {
+  id: string;
+  content: string;
+  isUser: boolean;
+}
+
+let messageIdCounter = 0;
+const generateMessageId = () => `msg_${++messageIdCounter}`;
 
 const AppPage: NextPage = () => {
   const router = useRouter();
   const { realm, selectedDog } = useAppStore();
+  const [isChatActive, setIsChatActive] = useState(false);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
+  const isInitializedRef = useRef(false);
 
   const savingsPercentage = Math.round(
     (realm.savingsAchieved / realm.savingsGoal) * 100
   );
 
+  // Scroll to bottom when new messages arrive
+  useEffect(() => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop =
+        chatContainerRef.current.scrollHeight;
+    }
+  }, [messages]);
+
+  // Initialize chat with welcome message when chat becomes active
+  useEffect(() => {
+    if (isChatActive && messages.length === 0 && !isInitializedRef.current) {
+      isInitializedRef.current = true;
+      const userName = "Eason"; // TODO: Get from user store
+      setMessages([
+        {
+          id: generateMessageId(),
+          content: `Woof woof! Hi ${userName}! How are ya?`,
+          isUser: false,
+        },
+      ]);
+    }
+  }, [isChatActive, messages.length]);
+
+  const handleSendMessage = async (content: string) => {
+    // Add user message immediately
+    const userMessage: Message = {
+      id: generateMessageId(),
+      content,
+      isUser: true,
+    };
+    setMessages((prev) => [...prev, userMessage]);
+    setIsLoading(true);
+
+    try {
+      // TODO: Replace with actual API call
+      // const response = await fetch("/api/chat", {
+      //   method: "POST",
+      //   headers: {
+      //     "Content-Type": "application/json",
+      //   },
+      //   body: JSON.stringify({
+      //     message: content,
+      //     dogName: selectedDog?.name,
+      //   }),
+      // });
+
+      // if (!response.ok) {
+      //   throw new Error("Failed to send message");
+      // }
+
+      // const data = await response.json();
+      const data = {
+        response: "Hello!",
+      };
+
+      // Add dog's response
+      const dogResponse: Message = {
+        id: generateMessageId(),
+        content: data.response,
+        isUser: false,
+      };
+      setMessages((prev) => [...prev, dogResponse]);
+    } catch (error) {
+      console.error("Failed to send message:", error);
+      // TODO: Show error toast
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
-    <>
-      <div className="min-h-screen w-full bg-[url('/backgrounds/bg-primary.png')] bg-cover bg-center font-patrick-hand text-[#392E1F] relative">
+    <div className="min-h-screen w-full bg-[url('/backgrounds/bg-primary.png')] bg-cover bg-center font-patrick-hand text-[#392E1F] relative">
+      <div className="flex flex-col h-screen">
+        {/* Main App View - Always Visible */}
         <div className="flex flex-col p-4">
           {/* Top Bar */}
           <div className="flex justify-between items-start">
@@ -87,8 +176,17 @@ const AppPage: NextPage = () => {
           </div>
 
           {/* Pet Display */}
-          <div className="flex-1 flex flex-col items-center justify-end transform translate-y-56">
-            <p className="my-2 text-2xl">{selectedDog?.name || "Luna"}</p>
+          <div
+            className={cn(
+              "flex-1 flex flex-col items-center justify-end transform",
+              isChatActive ? "translate-y-8" : "translate-y-56"
+            )}
+          >
+            {isChatActive ? (
+              <></>
+            ) : (
+              <p className="my-2 text-2xl">{selectedDog?.name || "Luna"}</p>
+            )}
             <div className="relative w-48 h-48">
               <Image
                 src={selectedDog?.image || "/dogs/pom.png"}
@@ -98,12 +196,45 @@ const AppPage: NextPage = () => {
               />
             </div>
           </div>
-
-          {/* Navigation */}
-          <BottomNav currentPath={router.pathname} />
         </div>
+
+        {/* Chat Interface - Overlaid when active */}
+        {isChatActive && (
+          <div className="absolute bottom-24 left-0 right-0 bg-[#FFE9B9] border-2 border-[#392E1F] backdrop-blur-sm rounded-lg shadow-lg overflow-hidden h-[45vh]">
+            {/* Chat Messages */}
+            <div
+              ref={chatContainerRef}
+              className="h-[calc(45vh-60px)] overflow-y-auto p-4 space-y-4"
+            >
+              {messages.map((message) => (
+                <MessageBubble
+                  key={message.id}
+                  message={message.content}
+                  isUser={message.isUser}
+                  senderName={
+                    !message.isUser ? selectedDog?.name || "Luna" : undefined
+                  }
+                />
+              ))}
+            </div>
+
+            {/* Chat Input */}
+            <div className="absolute bottom-0 left-0 right-0 bg-[#FFE9B9] border-[#392E1F] border-t">
+              <ChatInput
+                onSendMessage={handleSendMessage}
+                disabled={isLoading}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Navigation */}
+        <BottomNav
+          currentPath={router.pathname}
+          onChatClick={() => setIsChatActive(!isChatActive)}
+        />
       </div>
-    </>
+    </div>
   );
 };
 
