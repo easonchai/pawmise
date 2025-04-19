@@ -18,7 +18,7 @@ export default function App({ Component, pageProps }: AppProps) {
   return (
     <QueryClientProvider client={queryClient}>
       <SuiClientProvider networks={networks} defaultNetwork="devnet">
-        <WalletProvider>
+        <WalletProvider autoConnect={true}>
           <Component {...pageProps} />
         </WalletProvider>
       </SuiClientProvider>
