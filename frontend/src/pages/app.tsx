@@ -39,6 +39,12 @@ const AppPage: NextPage = () => {
 
   useEffect(() => {
     const fetchUserAndPetData = async () => {
+      if (!account) {
+        console.log("No wallet account found, skipping data fetch");
+        setIsDataLoading(false);
+        return;
+      }
+
       if (account) {
         try {
           setIsDataLoading(true);
@@ -81,6 +87,7 @@ const AppPage: NextPage = () => {
 
                 // Update selected dog in store with accurate data
                 setSelectedDog({
+                  id: petData.id,
                   breed: petData.breed.toLowerCase(),
                   name: petData.name,
                   image: `/dogs/${petData.breed.toLowerCase()}.png`,
