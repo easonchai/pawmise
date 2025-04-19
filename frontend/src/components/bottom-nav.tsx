@@ -65,7 +65,7 @@ export function BottomNav({ currentPath, onChatClick }: BottomNavProps) {
   const { logout } = useAppStore();
   const [emergencyOpen, setEmergencyOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const { guardianAngel } = useAppStore();
+  const { selectedDog } = useAppStore();
   const suiClient = useSuiClient();
   const [isProcessing, setIsProcessing] = useState(false);
   const { mutateAsync: signAndExecute } = useSignAndExecuteTransaction({
@@ -82,13 +82,14 @@ export function BottomNav({ currentPath, onChatClick }: BottomNavProps) {
       }),
   });
 
+  // // TODO: UPDATE BALANCE
   // Handle sending tokens to guardian
   const handleGivingTreats = async (amount: number) => {
     if (isProcessing) {
       return;
     }
 
-    if (!guardianAngel?.walletAddress) {
+    if (!selectedDog?.walletAddress) {
       console.error("No guardian wallet address found");
       return;
     }
@@ -133,7 +134,7 @@ export function BottomNav({ currentPath, onChatClick }: BottomNavProps) {
           tx.object(suitableMockCoin.coinObjectId),
           [mockAmountToSend]
         );
-        tx.transferObjects([splitToken], guardianAngel.walletAddress);
+        tx.transferObjects([splitToken], selectedDog.walletAddress);
       } else {
         // If no single coin has enough, merge coins until we have enough
         let totalBalance = BigInt(0);
@@ -160,17 +161,20 @@ export function BottomNav({ currentPath, onChatClick }: BottomNavProps) {
         }
         
         const [splitToken] = tx.splitCoins(primaryToken, [mockAmountToSend]);
-        tx.transferObjects([splitToken], guardianAngel.walletAddress);
+        tx.transferObjects([splitToken], selectedDog.walletAddress);
       }
       
       // Add SUI transfer - we'll use the gas coin directly for simplicity
       const [suiSplitCoin] = tx.splitCoins(tx.gas, [suiAmountToSend]);
-      tx.transferObjects([suiSplitCoin], guardianAngel.walletAddress);
+      tx.transferObjects([suiSplitCoin], selectedDog.walletAddress);
       
       // Execute the transaction
       const result = await signAndExecute({
         transaction: tx,
       });
+      if (result.effects?.status.status === "success") {
+        // TODO: Update balance
+      }
       
       console.log("Transaction successful!", result.digest);
       
