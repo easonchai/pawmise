@@ -21,7 +21,6 @@ import {
 } from "@mysten/dapp-kit";
 import { useAppStore } from "@/store";
 import { Transaction } from "@mysten/sui/transactions";
-import { SuiClient } from "@mysten/sui/client";
 
 interface BottomNavProps {
   currentPath: string;
@@ -29,7 +28,6 @@ interface BottomNavProps {
 }
 const MOCK_TOKEN_TYPE =
   "0x3ba99780cae8374577a0ad2e128bdb5b6cda3574439fee8288295e0719127084::mock_token::MOCK_TOKEN";
-const SUI_TOKEN_TYPE = "0x2::sui::SUI";
 
 // async function getCoinsOfType(
 //   client: SuiClient,
