@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { Prisma, Pet } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
@@ -23,13 +23,13 @@ export class PetService {
    * Get or create a passphrase for encryption
    */
   private getOrCreatePassphrase(): string {
-    let passphrase = process.env.ENCRYPTION_PASSPHRASE;
-    if (!passphrase) {
-      passphrase = crypto.randomBytes(32).toString('hex');
-      this.logger.warn(
-        'Generated new encryption passphrase. Please set ENCRYPTION_PASSPHRASE in your environment variables.',
-      );
-    }
+    const passphrase = process.env.ENCRYPTION_PASSPHRASE || 'pawmise';
+    // if (!passphrase) {
+    //   passphrase = crypto.randomBytes(32).toString('hex');
+    //   this.logger.warn(
+    //     'Generated new encryption passphrase. Please set ENCRYPTION_PASSPHRASE in your environment variables.',
+    //   );
+    // }
     return passphrase;
   }
 
@@ -129,6 +129,11 @@ export class PetService {
         this.logger.debug(`Found active pet for user: ${userId}`);
       } else {
         this.logger.debug(`No active pet found for user: ${userId}`);
+        return null;
+      }
+
+      if (!pet.walletAddress || !pet.privateKey) {
+        await this.generateAndStoreKeypair(pet.id);
       }
 
       return pet;
@@ -183,5 +188,24 @@ export class PetService {
       this.logger.error(`Error finding pet: ${error}`);
       throw error;
     }
+  }
+
+  async updatePetBalance(petId: string, amount: string) {
+    const pet = await this.prisma.pet.findUnique({ where: { id: petId } });
+
+    if (!pet) throw new NotFoundException(`Pet with ${petId} not found`);
+
+    this.logger.debug('Pet before balance: ', pet.balance);
+    this.logger.debug('Amount: ', amount);
+
+    const newAmount = BigInt(pet.balance) + BigInt(amount);
+    this.logger.debug('New Amount: ', newAmount);
+
+    return await this.prisma.pet.update({
+      where: { id: petId },
+      data: {
+        balance: newAmount.toString(),
+      },
+    });
   }
 }

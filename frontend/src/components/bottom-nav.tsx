@@ -76,6 +76,7 @@ export function BottomNav({ currentPath, onChatClick }: BottomNavProps) {
         signature,
         options: {
           // Raw effects are required so the effects can be reported back to the wallet
+          showEffects: true,
           showRawEffects: true,
           // Select additional data to return
           showObjectChanges: true,
@@ -126,14 +127,14 @@ export function BottomNav({ currentPath, onChatClick }: BottomNavProps) {
 
       // Find a MOCK token with sufficient balance
       const suitableMockCoin = mockCoins.find(
-        (coin) => BigInt(coin.balance) >= mockAmountToSend
+        (coin) => BigInt(coin.balance) >= mockAmountToSend,
       );
 
       if (suitableMockCoin) {
         // If we found a single coin with enough balance, use it directly
         const [splitToken] = tx.splitCoins(
           tx.object(suitableMockCoin.coinObjectId),
-          [mockAmountToSend]
+          [mockAmountToSend],
         );
         tx.transferObjects([splitToken], selectedDog.walletAddress);
       } else {
@@ -173,8 +174,14 @@ export function BottomNav({ currentPath, onChatClick }: BottomNavProps) {
       const result = await signAndExecute({
         transaction: tx,
       });
-      if (result.effects?.status.status === "success") {
+      console.log("RESULT")
+      console.dir(result, {depth: 7})
+      if (result.effects?.status.status === "success" && selectedDog.id) {
         // TODO: Update balance
+        await apiService.pet.updateBalance({
+          id: selectedDog.id,
+          amount: mockAmountToSend.toString(),
+        });
       }
 
       console.log("Transaction successful!", result.digest);
