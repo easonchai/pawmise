@@ -10,7 +10,7 @@ export class UserService {
 
   async getOrCreateUser(
     walletAddress: `0x${string}`,
-    savingsGoal: bigint,
+    savingsGoal: string,
   ): Promise<User> {
     return this.prisma.user.upsert({
       where: { walletAddress: walletAddress },

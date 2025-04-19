@@ -17,7 +17,6 @@ export default function Home() {
         const address = account.address;
         setWalletAddress(address);
 
-        // ADDED: Check if user exists in database
         try {
           const response = await apiService.user.getUser(address);
           if (response.data) {

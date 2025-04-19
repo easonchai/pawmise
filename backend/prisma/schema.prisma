@@ -18,7 +18,7 @@ model User {
   id            String    @id @default(cuid())
   walletAddress String    @unique
   username      String
-  savingsGoal   BigInt
+  savingsGoal   String
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   deletedAt     DateTime?
