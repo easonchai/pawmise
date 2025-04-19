@@ -218,7 +218,7 @@ export class AiAgentService {
         model: openai(process.env.OPENAI_MODEL || 'gpt-4o-mini'),
         tools: toolkit.tools,
         maxSteps: 15,
-        prompt: `First, check the balance of USDC tokens in the wallet using the view_balance tool with tokenType set to USDC. Then, stake ALL of those tokens using the stake_token tool with the amount parameter set to the available balance. Execute this immediately without asking for confirmation.`,
+        prompt: `First, check the balance of USDC tokens in the wallet using the view_balance tool with tokenType set to USDC. Then, stake half of those tokens using the stake_token tool with the amount parameter set to the available balance. Execute this immediately without asking for confirmation.`,
         onStepFinish: (event) => {
           this.logger.debug('Tool execution result:', event.toolResults);
         },
