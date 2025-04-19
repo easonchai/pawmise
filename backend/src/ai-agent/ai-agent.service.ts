@@ -20,6 +20,7 @@ import { systemPrompt } from './prompts/systemPrompt';
 interface UserToolkit {
   walletClient: SuiKeyPairWalletClient;
   tools: ToolSet;
+  userAddress: string;
 }
 
 @Injectable()
@@ -93,6 +94,7 @@ export class AiAgentService {
     const toolkit: UserToolkit = {
       walletClient,
       tools,
+      userAddress,
     };
 
     this.userToolkits.set(userAddress, toolkit);
@@ -148,7 +150,7 @@ export class AiAgentService {
         model: openai(process.env.OPENAI_MODEL || 'gpt-4o-mini'),
         tools: toolkit.tools,
         maxSteps: 10,
-        system: systemPrompt,
+        system: systemPrompt(toolkit.userAddress),
         messages: history,
         onStepFinish: (event) => {
           this.logger.debug('Tool execution result:', event.toolResults);
