@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import {
   ChatSessionService,
   Message,
@@ -30,6 +30,7 @@ export class AiAgentService {
 
   constructor(
     private readonly chatSessionService: ChatSessionService,
+    @Inject(forwardRef(() => PetService))
     private readonly petService: PetService,
     private readonly userService: UserService,
   ) {}

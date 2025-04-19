@@ -1,4 +1,10 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  forwardRef,
+  Inject,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { Prisma, Pet } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
@@ -11,7 +17,8 @@ export class PetService {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly aiService: AiAgentService,
+    @Inject(forwardRef(() => AiAgentService))
+    private readonly aiAgentService: AiAgentService,
   ) {}
 
   async createPet(data: Prisma.PetCreateInput): Promise<Pet> {
@@ -244,7 +251,10 @@ export class PetService {
 
     const newAmount = BigInt(pet.balance) + BigInt(amount);
     this.logger.debug('New Amount: ', newAmount);
-    await this.aiService.upgradeOrMintNFT(pet.user.walletAddress, newAmount);
+    await this.aiAgentService.upgradeOrMintNFT(
+      pet.user.walletAddress,
+      newAmount,
+    );
 
     return await this.prisma.pet.update({
       where: { id: petId },

@@ -1,15 +1,15 @@
-import { Module } from '@nestjs/common';
+// src/ai-agent/ai-agent.module.ts
+import { Module, forwardRef } from '@nestjs/common';
 import { AiAgentService } from './ai-agent.service';
-import { ChatSessionModule } from 'src/chat-session/chat-session.module';
 import { AiAgentController } from './ai-agent.controller';
+import { ChatSessionModule } from 'src/chat-session/chat-session.module';
 import { UserModule } from 'src/user/user.module';
 import { PetModule } from 'src/pet/pet.module';
-import { UserService } from 'src/user/user.service';
-import { PetService } from 'src/pet/pet.service';
 
 @Module({
-  providers: [AiAgentService, UserService, PetService],
-  imports: [ChatSessionModule, UserModule, PetModule],
+  imports: [ChatSessionModule, UserModule, forwardRef(() => PetModule)],
+  providers: [AiAgentService],
   controllers: [AiAgentController],
+  exports: [AiAgentService],
 })
 export class AiAgentModule {}
