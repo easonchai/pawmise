@@ -4,6 +4,7 @@ import { useRouter } from "next/router";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CurrencyInput } from "@/components/ui/currency-input";
+import { useAppStore } from "@/store";
 
 interface FormData {
   savingsGoal: string;
@@ -15,22 +16,27 @@ const DOGS = [
   {
     breed: "pom",
     name: "Luna",
+    image: "/dogs/pom.png",
   },
   {
     breed: "chihuahua",
     name: "Cheeky",
+    image: "/dogs/chihuahua.png",
   },
   {
     breed: "corgi",
     name: "Hazel",
+    image: "/dogs/corgi.png",
   },
   {
     breed: "goldie",
     name: "Lucky",
+    image: "/dogs/goldie.png",
   },
   {
     breed: "shihtzu",
     name: "Nikko",
+    image: "/dogs/shihtzu.png",
   },
 ];
 
@@ -45,6 +51,14 @@ const getTierFromAmount = (amount: number): number => {
 
 export default function Onboarding() {
   const router = useRouter();
+  const {
+    setSelectedDog,
+    setSavingsGoal,
+    setUserName,
+    setIsOnboarded,
+    updateRealmStatus,
+  } = useAppStore();
+
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState<FormData>({
     savingsGoal: "",
@@ -68,7 +82,7 @@ export default function Onboarding() {
       savingsGoal: value,
     }));
 
-    const numericValue = parseFloat(value);
+    const numericValue = parseFloat(value.replace(/[^0-9.]/g, ""));
     if (!isNaN(numericValue)) {
       setCurrentTier(getTierFromAmount(numericValue));
     }
@@ -92,6 +106,38 @@ export default function Onboarding() {
     if (step < 3) {
       setStep((prev) => prev + 1);
     } else {
+      // Save all data to store
+      const numericSavingsGoal = parseFloat(
+        formData.savingsGoal.replace(/[^0-9.]/g, "")
+      );
+
+      // Update selected dog
+      setSelectedDog({
+        breed: DOGS[selectedDogIndex].breed,
+        name: formData.petName || DOGS[selectedDogIndex].name,
+        image: DOGS[selectedDogIndex].image,
+      });
+
+      // Update savings goal
+      setSavingsGoal(formData.savingsGoal);
+
+      // Update user name
+      setUserName(formData.userName);
+
+      // Update realm status
+      updateRealmStatus({
+        tier: getTierFromAmount(numericSavingsGoal),
+        savingsGoal: numericSavingsGoal,
+        savingsAchieved: 0, // Start with 0 savings
+        hearts: 2, // Default starting hearts
+        maxHearts: 3,
+        status: "Just Started",
+      });
+
+      // Mark as onboarded
+      setIsOnboarded(true);
+
+      // Navigate to app
       router.push("/app");
     }
   };
@@ -137,7 +183,7 @@ export default function Onboarding() {
             <h2 className="text-2xl">Select your guardian angel</h2>
             <div className="relative w-full aspect-square max-w-[300px] mx-auto">
               <Image
-                src={`/dogs/${DOGS[selectedDogIndex].breed}.png`}
+                src={DOGS[selectedDogIndex].image}
                 alt="Guardian Angel"
                 fill
                 className="object-contain"
@@ -181,7 +227,7 @@ export default function Onboarding() {
             </h2>
             <div className="relative w-full aspect-square max-w-[300px] mx-auto">
               <Image
-                src={`/dogs/${DOGS[selectedDogIndex].breed}.png`}
+                src={DOGS[selectedDogIndex].image}
                 alt="Guardian Angel"
                 fill
                 className="object-contain"

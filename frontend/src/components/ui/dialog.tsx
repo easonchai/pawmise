@@ -4,13 +4,13 @@ import { X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
-interface EmergencyDialogProps extends DialogPrimitive.DialogProps {
+interface DialogProps extends DialogPrimitive.DialogProps {
   title: string;
   description: string;
   children?: React.ReactNode;
 }
 
-const EmergencyDialog = React.forwardRef<HTMLDivElement, EmergencyDialogProps>(
+const Dialog = React.forwardRef<HTMLDivElement, DialogProps>(
   ({ title, description, children, ...props }, ref) => (
     <DialogPrimitive.Root {...props}>
       <DialogPrimitive.Portal>
@@ -40,6 +40,6 @@ const EmergencyDialog = React.forwardRef<HTMLDivElement, EmergencyDialogProps>(
     </DialogPrimitive.Root>
   )
 );
-EmergencyDialog.displayName = "EmergencyDialog";
+Dialog.displayName = "Dialog";
 
-export { EmergencyDialog };
+export { Dialog };

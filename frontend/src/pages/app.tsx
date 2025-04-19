@@ -1,8 +1,5 @@
 import { NextPage } from "next";
 import Image from "next/image";
-import { Button } from "@/components/ui/button";
-import { EmergencyDialog } from "@/components/ui/emergency-dialog";
-import { useState } from "react";
 import { useRouter } from "next/router";
 import { useAppStore } from "@/store";
 import { BottomNav } from "@/components/bottom-nav";
@@ -10,8 +7,6 @@ import { BottomNav } from "@/components/bottom-nav";
 const AppPage: NextPage = () => {
   const router = useRouter();
   const { realm, selectedDog } = useAppStore();
-  const [emergencyOpen, setEmergencyOpen] = useState(false);
-  const [settingsOpen, setSettingsOpen] = useState(false);
 
   const savingsPercentage = Math.round(
     (realm.savingsAchieved / realm.savingsGoal) * 100
@@ -104,61 +99,9 @@ const AppPage: NextPage = () => {
             </div>
           </div>
 
-          {/* Give Treats Button */}
-          {/* <div className="flex justify-center mb-8 fixed bottom-24 left-0 right-0">
-            <Button className="text-lg px-8 py-2 bg-[#F6D998] hover:bg-[#F6D998]/90 text-[#392E1F] border-2 border-[#392E1F]">
-              Give Treats
-            </Button>
-          </div> */}
-
           {/* Navigation */}
           <BottomNav currentPath={router.pathname} />
         </div>
-
-        {/* Dialogs */}
-        <EmergencyDialog
-          open={emergencyOpen}
-          onOpenChange={setEmergencyOpen}
-          title="Emergency Withdrawals"
-          description="At any point in time, you may request for an emergency withdrawal. This will allow you to withdraw everything, no questions asked.
-
-But in doing so, your guardian will fall. Your realm, everything you've built, will be sealed and archived forever. You will start again, with a new companion, a new dream.
-
-Are you sure you're prepared for this?"
-        >
-          <Button
-            variant="emergencyDestructive"
-            onClick={() => setEmergencyOpen(false)}
-          >
-            Cancel
-          </Button>
-          <Button
-            variant="emergency"
-            onClick={() => {
-              console.log("Emergency withdrawal initiated");
-              setEmergencyOpen(false);
-            }}
-          >
-            Yes, withdraw
-          </Button>
-        </EmergencyDialog>
-
-        <EmergencyDialog
-          open={settingsOpen}
-          onOpenChange={setSettingsOpen}
-          title="Settings"
-          description="Work in progress..."
-        >
-          <Button
-            variant="emergencyDestructive"
-            onClick={() => {
-              console.log("Logging out...");
-              setSettingsOpen(false);
-            }}
-          >
-            Log Out
-          </Button>
-        </EmergencyDialog>
       </div>
     </>
   );

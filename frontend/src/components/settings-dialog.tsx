@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { EmergencyDialog } from "@/components/ui/emergency-dialog";
+import { EmergencyDialog } from "@/components/ui/dialog";
 
 export function SettingsDialog() {
   const [open, setOpen] = useState(false);
