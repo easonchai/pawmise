@@ -26,9 +26,6 @@ public struct LendingMarket<phantom P> has key {
 // Dummy struct kept for compatibility - we don't use this internally
 public struct CToken<phantom P, phantom T> has drop {}
 
-// Required by the original API
-public struct RateLimiterExemption<phantom P, phantom T> has drop {}
-
 // Create a new lending market
 public entry fun create_lending_market<P>(ctx: &mut TxContext) {
     transfer::share_object(LendingMarket<P> {
@@ -99,7 +96,6 @@ public fun redeem_ctokens_and_withdraw_liquidity<P, T: drop>(
     _reserve_array_index: u64,
     _clock: &Clock,
     amount: u64,
-    _rate_limiter_exemption: Option<RateLimiterExemption<P, T>>,
     ctx: &mut TxContext,
 ): Coin<MOCK_TOKEN> {
     let type_name = type_name::get<T>();
@@ -267,7 +263,6 @@ fun test_deposit_and_withdraw_full() {
             0, // reserve index (unused)
             &clock,
             1000, // withdraw full amount
-            option::none(),
             test_scenario::ctx(&mut scenario),
         );
 
@@ -340,7 +335,6 @@ fun test_deposit_and_partial_withdrawals() {
             0,
             &clock,
             400, // Withdraw 400 tokens
-            option::none(),
             test_scenario::ctx(&mut scenario),
         );
 
@@ -366,7 +360,6 @@ fun test_deposit_and_partial_withdrawals() {
             0,
             &clock,
             600, // Withdraw remaining 600 tokens
-            option::none(),
             test_scenario::ctx(&mut scenario),
         );
 
@@ -465,7 +458,6 @@ fun test_multiple_deposits() {
             0,
             &clock,
             1000,
-            option::none(),
             test_scenario::ctx(&mut scenario),
         );
 
