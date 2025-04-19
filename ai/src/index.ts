@@ -15,6 +15,7 @@ import * as dotenv from "dotenv";
 // import { myPlugin } from "./plugins/checkSUIBalance.plugin";
 import { viewBalance } from "plugins/viewBalance.plugin";
 import { TokenPlugin } from "plugins/tokenHandler.plugin";
+import { NftSUIPlugin } from "plugins/nftHandler.plugin";
 
 dotenv.config();
 
@@ -44,7 +45,7 @@ const walletClient = new SuiKeyPairWalletClient({
   // 2. Get your onchain tools for your wallet
   const tools = await getOnChainTools({
     wallet: walletClient,
-    plugins: [viewBalance(), new TokenPlugin()],
+    plugins: [new NftSUIPlugin(), new TokenPlugin()],
   });
 
   // 3. Create a readline interface to interact with the agent

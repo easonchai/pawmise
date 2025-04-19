@@ -3,9 +3,11 @@ import { Transaction } from "@mysten/sui/transactions";
 import { z } from "zod";
 import { SuiWalletClient } from "@goat-sdk/wallet-sui";
 
-const contractAddress = process.env.PAWMISE_ADDRESS;
+// const contractAddress = "0x80a711cc6cc1f06067c915a672861f07c457616acb2570f0d3a7889f6f24847a";
+const contractAddress = "0x1e9ab043a94e004340dcb037eb028cbab3a567aca76f0ee8b0ca0c0fe745b6e4";
 
 const mintNFTParametersSchema = z.object({
+  address: z.string().describe("The Address of wallet to mint nft to")
   // to: z.string().describe("The recipient's address"),
   // amount: z.number().describe("The amount of SUI to send"),
 });
@@ -39,11 +41,13 @@ const mintNFTMethod = async (
   // const { to, amount } = parameters;
   const tx = new Transaction();
   // TODO: ADD counter object id
-  const counterObjectId = "";
+  const counterObjectId = "0x16e67d0c9186a41cf1b90bd8d5e6fbdbc2e717628e5eccc2e36e365399b0978f";
 
   const sender = walletClient.getAddress();
+  const {address} = parameters;
+  // console.log("ADDRESSSSSSSSSSSSSSSSSS: ", contractAddress)
   tx.setSender(sender);
-  tx.moveCall({
+  const [mintedNFT] = tx.moveCall({
     // WARN: replace first pawmise with contract address
     target: `${contractAddress}::pawmise::mint`,
     arguments: [
@@ -51,12 +55,15 @@ const mintNFTMethod = async (
       tx.pure.string("Forest Realm"), // name
       tx.pure.string("A magical forest"), // description
       tx.pure.string("ipfs://forest.png"), // image_url
-      tx.pure.address(sender), // creator address (using the wallet's address)
+      tx.pure.address(address), // creator address (using the wallet's address)
     ],
   });
+
+  tx.transferObjects([mintedNFT], address);
   await tx.build({ client: walletClient.getClient() });
 
   const result = await walletClient.sendTransaction({ transaction: tx });
+  console.log("RESULT: ", result)
 
   // TODO: Check if this is correct
   await walletClient.getClient().waitForTransaction({ digest: result.hash });
@@ -154,7 +161,7 @@ const burnNFTMethod = async (
 
 export class NftSUIPlugin extends PluginBase<SuiWalletClient> {
   constructor() {
-    super("nft", []);
+    super("nftContractTools", []);
   }
 
   supportsChain = (chain: Chain) => chain.type === "sui";
