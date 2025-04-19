@@ -52,7 +52,7 @@ const AppPage: NextPage = () => {
         },
       ]);
     }
-  }, [isChatActive, messages.length]);
+  }, [isChatActive, messages.length, userName]);
 
   const handleSendMessage = async (content: string) => {
     // Add user message immediately
