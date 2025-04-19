@@ -6,6 +6,7 @@ use sui::bcs;
 use sui::clock::Clock;
 use sui::coin::{Self, Coin};
 use sui::table::{Self, Table};
+use pawmise::mock_token::MOCK_TOKEN;
 
 const EInsufficientBalance: u64 = 1;
 const EInsufficientInterestFunds: u64 = 2;
@@ -24,9 +25,6 @@ public struct LendingMarket<phantom P> has key {
 
 // Dummy struct kept for compatibility - we don't use this internally
 public struct CToken<phantom P, phantom T> has drop {}
-
-// Simple placeholder struct for MOCK_TOKEN
-public struct MOCK_TOKEN has drop {}
 
 // Required by the original API
 public struct RateLimiterExemption<phantom P, phantom T> has drop {}
