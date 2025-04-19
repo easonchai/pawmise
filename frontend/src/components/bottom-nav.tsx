@@ -188,11 +188,11 @@ export function BottomNav({ currentPath, onChatClick }: BottomNavProps) {
 
       if (currentAccount) {
         try {
-          console.log("Initiating automatic staking of all tokens...");
-          const stakeResponse = await apiService.ai.stakeAllTokens(
+          // console.log("Initiating automatic staking of all tokens...");
+          await apiService.ai.stakeAllTokens(
             currentAccount.address
           );
-          console.log("Auto-staking result:", stakeResponse);
+          // console.log("Auto-staking result:", stakeResponse);
         } catch (stakeError) {
           console.error("Failed to auto-stake tokens:", stakeError);
         }
