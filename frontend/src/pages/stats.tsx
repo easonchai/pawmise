@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import { NextPage } from "next";
 import { useRouter } from "next/router";
@@ -51,8 +51,12 @@ const StatsPage: NextPage = () => {
         <div className="bg-[#F6D998] rounded-lg p-4 shadow-md border-2 border-[#392E1F]">
           <h2 className="text-2xl mb-2">Wallet Balance</h2>
           <div className="flex items-baseline gap-2">
-            <span className="text-4xl font-medium">$69,420.88</span>
-            <span className="text-[#4CAF50] text-sm">+52% since last yr</span>
+            <span className="text-4xl font-medium">
+              ${realm.savingsAchieved.toLocaleString()}
+            </span>
+            {realm.savingsAchieved > 0 && (
+              <span className="text-[#4CAF50] text-sm">+52% since last yr</span>
+            )}
           </div>
         </div>
 
