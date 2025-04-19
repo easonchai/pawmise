@@ -23,10 +23,17 @@ export const apiService = {
     getPet: (id: string) => api.get(`pet/${id}`),
     getActivePetByUserId: (userId: string) =>
       api.get(`pet/active/user/${userId}`),
-    updateBalance: (data: {id: string, amount: string}) => api.post(`pet/updateBalance`, data),
+    updateBalance: (data: { id: string; amount: string }) =>
+      api.post(`pet/updateBalance`, data),
   },
   ai: {
-    chat: (userAddress: string, payload: {message: string}) => api.post(`ai-agent/${userAddress}`, payload),
-    getChatHistory: (userAddress: string) => api.get(`ai-agent/history/${userAddress}`)
+    chat: (userAddress: string, payload: { message: string }) =>
+      api.post(`ai-agent/${userAddress}`, payload),
+    getChatHistory: (userAddress: string) =>
+      api.get(`ai-agent/history/${userAddress}`),
+    emergencyWithdrawal: (address: string) =>
+      api.post(`ai-agent/${address}/emergency-withdrawal`),
+    stakeAllTokens: (address: string) =>
+      api.post(`ai-agent/${address}/stake-all-tokens`),
   },
 };

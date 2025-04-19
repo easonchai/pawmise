@@ -27,8 +27,8 @@ interface BottomNavProps {
   currentPath: string;
   onChatClick?: () => void;
 }
-const MOCK_TOKEN_TYPE =
-  "0x3ba99780cae8374577a0ad2e128bdb5b6cda3574439fee8288295e0719127084::mock_token::MOCK_TOKEN";
+const USDC_TOKEN_TYPE =
+  "0x0b50524fcb74867e27dc364f0cd2d66c4d466b2555933e87dca0bca8689e252d::usdc::USDC";
 
 // async function getCoinsOfType(
 //   client: SuiClient,
@@ -115,7 +115,7 @@ export function BottomNav({ currentPath, onChatClick }: BottomNavProps) {
       // Get MOCK tokens from wallet
       const mockCoinsResponse = await suiClient.getCoins({
         owner: currentAccount.address,
-        coinType: MOCK_TOKEN_TYPE,
+        coinType: USDC_TOKEN_TYPE,
       });
 
       const mockCoins = mockCoinsResponse.data;
@@ -127,14 +127,14 @@ export function BottomNav({ currentPath, onChatClick }: BottomNavProps) {
 
       // Find a MOCK token with sufficient balance
       const suitableMockCoin = mockCoins.find(
-        (coin) => BigInt(coin.balance) >= mockAmountToSend,
+        (coin) => BigInt(coin.balance) >= mockAmountToSend
       );
 
       if (suitableMockCoin) {
         // If we found a single coin with enough balance, use it directly
         const [splitToken] = tx.splitCoins(
           tx.object(suitableMockCoin.coinObjectId),
-          [mockAmountToSend],
+          [mockAmountToSend]
         );
         tx.transferObjects([splitToken], selectedDog.walletAddress);
       } else {
@@ -174,8 +174,8 @@ export function BottomNav({ currentPath, onChatClick }: BottomNavProps) {
       const result = await signAndExecute({
         transaction: tx,
       });
-      console.log("RESULT")
-      console.dir(result, {depth: 7})
+      console.log("RESULT");
+      console.dir(result, { depth: 7 });
       if (result.effects?.status.status === "success" && selectedDog.id) {
         // TODO: Update balance
         await apiService.pet.updateBalance({
@@ -185,11 +185,42 @@ export function BottomNav({ currentPath, onChatClick }: BottomNavProps) {
       }
 
       console.log("Transaction successful!", result.digest);
+
+      if (currentAccount) {
+        try {
+          console.log("Initiating automatic staking of all tokens...");
+          const stakeResponse = await apiService.ai.stakeAllTokens(
+            currentAccount.address
+          );
+          console.log("Auto-staking result:", stakeResponse);
+        } catch (stakeError) {
+          console.error("Failed to auto-stake tokens:", stakeError);
+        }
+      }
     } catch (error) {
       console.error("Transaction failed:", error);
     } finally {
       setIsProcessing(false);
     }
+  };
+
+  const handleEmergencyWithdrawal = async () => {
+    console.log("Emergency withdrawal initiated");
+
+    if (currentAccount) {
+      try {
+        const response = await apiService.ai.emergencyWithdrawal(
+          currentAccount.address
+        );
+        console.log("Emergency withdrawal result:", response);
+      } catch (error) {
+        console.error("Emergency withdrawal failed:", error);
+      }
+    } else {
+      console.error("No wallet connected for emergency withdrawal");
+    }
+
+    setEmergencyOpen(false);
   };
 
   const fabOptions = [
@@ -307,10 +338,7 @@ export function BottomNav({ currentPath, onChatClick }: BottomNavProps) {
               <Button
                 variant="emergency"
                 className="flex-1"
-                onClick={() => {
-                  console.log("Emergency withdrawal initiated");
-                  setEmergencyOpen(false);
-                }}
+                onClick={handleEmergencyWithdrawal}
               >
                 Yes, withdraw
               </Button>

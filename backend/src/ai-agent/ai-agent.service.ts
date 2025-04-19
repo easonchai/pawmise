@@ -14,7 +14,7 @@ import { TokenPlugin } from './plugins/tokenHandler.plugin';
 import { NftSUIPlugin } from './plugins/nftHandler.plugin';
 import { PetService } from 'src/pet/pet.service';
 import { UserService } from 'src/user/user.service';
-import { MockTokenPlugin } from './plugins/stakeContractHandler.plugin';
+import { USDCTokenPlugin } from './plugins/stakeContractHandler.plugin';
 import { systemPrompt } from './prompts/systemPrompt';
 
 interface UserToolkit {
@@ -87,7 +87,7 @@ export class AiAgentService {
     // Initialize tools for this wallet
     const tools = (await getOnChainTools({
       wallet: walletClient,
-      plugins: [new NftSUIPlugin(), new TokenPlugin(), new MockTokenPlugin()],
+      plugins: [new NftSUIPlugin(), new TokenPlugin(), new USDCTokenPlugin()],
     })) as ToolSet;
 
     // Create and store the toolkit
@@ -136,6 +136,108 @@ export class AiAgentService {
     });
 
     return aiResponse;
+  }
+
+  /**
+   * Process emergency withdrawal for a user
+   * @param userAddress The user's wallet address
+   * @returns Result of the emergency withdrawal operation
+   */
+  async processEmergencyWithdrawal(
+    userAddress: `0x${string}`,
+  ): Promise<{ success: boolean; message: string; txHash?: string }> {
+    this.logger.log(`Processing emergency withdrawal for user: ${userAddress}`);
+
+    try {
+      // Get the user's toolkit
+      const toolkit = await this.getToolkit(userAddress);
+
+      // Get the pet's balance from the database
+      const user = await this.userService.getUser({
+        where: { walletAddress: userAddress },
+      });
+
+      if (!user) {
+        throw new Error('User not found');
+      }
+
+      const pet = await this.petService.getActivePetByUserId(user.id);
+
+      if (!pet) {
+        throw new Error('No active pet found for user');
+      }
+
+      // Generate AI response for emergency withdrawal
+      const result = await generateText({
+        model: openai(process.env.OPENAI_MODEL || 'gpt-4o-mini'),
+        tools: toolkit.tools,
+        maxSteps: 10,
+        prompt: `EMERGENCY WITHDRAWAL: The user has requested an emergency withdrawal. Please redeem ALL tokens from the staking contract using the redeem_token tool. The pet's current balance is ${pet.balance}. This is an emergency, so execute this immediately without asking for confirmation.`,
+        onStepFinish: (event) => {
+          this.logger.debug('Tool execution result:', event.toolResults);
+        },
+      });
+
+      return {
+        success: true,
+        message: result.text,
+      };
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      this.logger.error(
+        `Error processing emergency withdrawal: ${errorMessage}`,
+      );
+
+      return {
+        success: false,
+        message: `Failed to process withdrawal: ${errorMessage}`,
+      };
+    }
+  }
+
+  /**
+   * Process staking of all available USDC tokens in agent's wallet
+   * @param userAddress The user's wallet address
+   * @returns Result of the staking operation
+   */
+  async processStakeAllTokens(userAddress: `0x${string}`): Promise<{
+    success: boolean;
+    message: string;
+    txHash?: string;
+    amount?: number;
+  }> {
+    this.logger.log(
+      `Processing staking of all tokens for user: ${userAddress}`,
+    );
+
+    try {
+      const toolkit = await this.getToolkit(userAddress);
+
+      const result = await generateText({
+        model: openai(process.env.OPENAI_MODEL || 'gpt-4o-mini'),
+        tools: toolkit.tools,
+        maxSteps: 15,
+        prompt: `First, check the balance of USDC tokens in the wallet using the view_balance tool with tokenType set to USDC. Then, stake ALL of those tokens using the stake_token tool with the amount parameter set to the available balance. Execute this immediately without asking for confirmation.`,
+        onStepFinish: (event) => {
+          this.logger.debug('Tool execution result:', event.toolResults);
+        },
+      });
+
+      return {
+        success: true,
+        message: result.text,
+      };
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      this.logger.error(`Error processing token staking: ${errorMessage}`);
+
+      return {
+        success: false,
+        message: `Failed to stake tokens: ${errorMessage}`,
+      };
+    }
   }
 
   /**

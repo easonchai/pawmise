@@ -5,8 +5,8 @@ import { SuiWalletClient } from '@goat-sdk/wallet-sui';
 
 const COMMON_TOKENS = {
   SUI: '0x2::sui::SUI',
-  USDC: '0x3ba99780cae8374577a0ad2e128bdb5b6cda3574439fee8288295e0719127084::mock_token::MOCK_TOKEN', // Example address
-  USDT: '0x4d08e8a307bd2283de88e3ee76258892b14be40a77bf6daadf6d4e7f89b6f6af::coin::COIN', // Example address
+  USDC: '0x0b50524fcb74867e27dc364f0cd2d66c4d466b2555933e87dca0bca8689e252d::usdc::USDC', // Example address
+  USDT: '0x0b50524fcb74867e27dc364f0cd2d66c4d466b2555933e87dca0bca8689e252d::coin::COIN', // Example address
 } as const;
 
 // ---------------------HELPER FUNCTIONS-------------------------------

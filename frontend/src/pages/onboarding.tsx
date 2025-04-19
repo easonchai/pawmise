@@ -157,7 +157,7 @@ export default function Onboarding() {
           // Create user with appropriate types
           const userResponse = await apiService.user.createUser({
             walletAddress: account.address,
-            savingsGoal: Math.round(numericSavingsGoal * 100).toString(), // Convert to cents and then to string
+            savingsGoal: Math.round(numericSavingsGoal).toString(),
           });
 
           // Get the created/retrieved user ID
