@@ -55,8 +55,9 @@ export class AiAgentController {
     }
   }
 
-  @Get(':userAddress/history')
+  @Get('history/:userAddress')
   getHistory(@Param('userAddress') userAddress: string) {
+    this.logger.debug('fetching chat history');
     const history = this.aiAgentService.getSessionHistory(userAddress);
 
     // For privacy/security, only return the role and content, not any internal properties

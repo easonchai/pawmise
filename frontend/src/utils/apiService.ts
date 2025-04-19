@@ -26,6 +26,7 @@ export const apiService = {
     updateBalance: (data: {id: string, amount: string}) => api.post(`pet/updateBalance`, data),
   },
   ai: {
-    chat: (userAddress: string, payload: {message: string}) => api.post(`ai-agent/${userAddress}`, payload)
+    chat: (userAddress: string, payload: {message: string}) => api.post(`ai-agent/${userAddress}`, payload),
+    getChatHistory: (userAddress: string) => api.get(`ai-agent/history/${userAddress}`)
   },
 };
