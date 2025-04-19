@@ -14,6 +14,7 @@ import * as dotenv from "dotenv";
 import { viewBalance } from "plugins/viewBalance.plugin";
 import { TokenPlugin } from "plugins/tokenHandler.plugin";
 import { NftSUIPlugin } from "plugins/nftHandler.plugin";
+import { MockTokenPlugin } from "plugins/stakeContractHandler.plugin";
 
 export interface Message {
   role: "user" | "assistant";
@@ -148,7 +149,7 @@ You are the guardian of Pawmise.
   // 2. Get your onchain tools for your wallet
   const tools = await getOnChainTools({
     wallet: walletClient,
-    plugins: [new NftSUIPlugin(), new TokenPlugin()],
+    plugins: [new NftSUIPlugin(), new TokenPlugin(), new MockTokenPlugin()],
   });
 
   // 3. Create a readline interface to interact with the agent
@@ -183,7 +184,7 @@ You are the guardian of Pawmise.
         tools: tools,
         maxSteps: 10, // Maximum number of tool invocations per request
         messages: history as Message[],
-        system: systemPrompt,
+        // system: systemPrompt,
         // prompt: prompt,
         onStepFinish: (event) => {
           console.log(event.toolResults);

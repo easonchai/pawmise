@@ -5,7 +5,7 @@ import { SuiWalletClient } from "@goat-sdk/wallet-sui";
 
 const COMMON_TOKENS = {
   SUI: "0x2::sui::SUI",
-  USDC: "0x5d4b302506645c37ff133b98c4b50a5ae14841659738d6d733d59d0d217a93bf::coin::COIN", // Example address
+  MOCK: "0x3ba99780cae8374577a0ad2e128bdb5b6cda3574439fee8288295e0719127084::mock_token::MOCK_TOKEN", // Example address
   USDT: "0x4d08e8a307bd2283de88e3ee76258892b14be40a77bf6daadf6d4e7f89b6f6af::coin::COIN", // Example address
 } as const;
 
@@ -61,7 +61,7 @@ const sendTokenParametersSchema = z.object({
   to: z.string().describe("The recipient's address"),
   amount: z.number().describe("The amount of token to send"),
   tokenType: z
-    .enum(["SUI", "USDC", "USDT"])
+    .enum(["SUI", "MOCK", "USDT"])
     .describe("The type of token to send"),
 });
 
@@ -77,7 +77,7 @@ const viewBalanceParametersSchema = z.object({
     .optional()
     .describe("Whether to return a human-readable format"),
   tokenType: z
-    .enum(["SUI", "USDC", "USDT"])
+    .enum(["SUI", "MOCK", "USDT"])
     .describe("The type of token to send"),
 });
 
