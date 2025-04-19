@@ -25,7 +25,7 @@ export interface Settings {
 
 export interface UserState {
   walletAddress: string | null;
-  savingsGoal: string;
+  // savingsGoal: string;
   selectedDog: Dog | null;
   userName: string;
   isOnboarded: boolean;
