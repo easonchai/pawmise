@@ -10,6 +10,17 @@ export interface GuardianAngel {
   image: string;
 }
 
+export interface ChatMessage {
+  content: string;
+  isUser: boolean;
+}
+
+export interface Settings {
+  notificationsEnabled: boolean;
+  soundEnabled: boolean;
+  language: string;
+}
+
 export interface UserState {
   walletAddress: string | null;
   savingsGoal: string;
@@ -30,4 +41,6 @@ export interface RealmState {
 
 export interface AppState extends UserState {
   realm: RealmState;
+  chatHistory: ChatMessage[];
+  settings: Settings;
 }

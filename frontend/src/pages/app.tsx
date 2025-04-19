@@ -26,6 +26,7 @@ const AppPage: NextPage = () => {
   const [isTyping, setIsTyping] = useState(false);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const isInitializedRef = useRef(false);
+  const { userName } = useAppStore();
 
   const savingsPercentage = Math.round(
     (realm.savingsAchieved / realm.savingsGoal) * 100
@@ -43,7 +44,6 @@ const AppPage: NextPage = () => {
   useEffect(() => {
     if (isChatActive && messages.length === 0 && !isInitializedRef.current) {
       isInitializedRef.current = true;
-      const userName = "Eason"; // TODO: Get from user store
       setMessages([
         {
           id: generateMessageId(),

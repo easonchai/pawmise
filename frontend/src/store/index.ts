@@ -1,16 +1,13 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { AppState, Dog, RealmState } from "@/types";
-
-interface GuardianAngel {
-  name: string;
-  type: string;
-  image: string;
-}
+import { AppState, Dog, RealmState, GuardianAngel, ChatMessage } from "@/types";
 
 interface AppStore extends AppState {
-  // User Actions
+  // Auth Actions
   setWalletAddress: (address: string | null) => void;
+  logout: () => void;
+
+  // User Profile Actions
   setSavingsGoal: (goal: string) => void;
   setSelectedDog: (dog: Dog | null) => void;
   setUserName: (name: string) => void;
@@ -19,13 +16,24 @@ interface AppStore extends AppState {
 
   // Realm Actions
   updateRealmStatus: (status: Partial<RealmState>) => void;
+  incrementHearts: () => void;
+  decrementHearts: () => void;
+  updateSavingsProgress: (achieved: number) => void;
+  updateTier: (tier: number) => void;
+
+  // Chat Actions
+  setChatHistory: (messages: ChatMessage[]) => void;
+  clearChatHistory: () => void;
 
   // Reset Action
   reset: () => void;
 }
 
 const initialState: AppState = {
+  // Auth
   walletAddress: null,
+
+  // User Profile
   savingsGoal: "25000",
   selectedDog: {
     breed: "Pomeranian",
@@ -39,6 +47,8 @@ const initialState: AppState = {
     type: "Nature Spirit",
     image: "/angels/lily.png",
   },
+
+  // Realm
   realm: {
     status: "Flourishing",
     hearts: 2,
@@ -47,6 +57,16 @@ const initialState: AppState = {
     savingsAchieved: 20000,
     tier: 3,
   },
+
+  // Chat
+  chatHistory: [],
+
+  // Settings
+  settings: {
+    notificationsEnabled: true,
+    soundEnabled: true,
+    language: "en",
+  },
 };
 
 export const useAppStore = create<AppStore>()(
@@ -54,10 +74,16 @@ export const useAppStore = create<AppStore>()(
     (set) => ({
       ...initialState,
 
-      // User Actions
+      // Auth Actions
       setWalletAddress: (address) =>
         set((state) => ({ ...state, walletAddress: address })),
 
+      logout: () => {
+        // Just reset the state
+        set(initialState);
+      },
+
+      // User Profile Actions
       setSavingsGoal: (goal) =>
         set((state) => ({ ...state, savingsGoal: goal })),
 
@@ -77,6 +103,48 @@ export const useAppStore = create<AppStore>()(
           ...state,
           realm: { ...state.realm, ...status },
         })),
+
+      incrementHearts: () =>
+        set((state) => ({
+          ...state,
+          realm: {
+            ...state.realm,
+            hearts: Math.min(state.realm.hearts + 1, state.realm.maxHearts),
+          },
+        })),
+
+      decrementHearts: () =>
+        set((state) => ({
+          ...state,
+          realm: {
+            ...state.realm,
+            hearts: Math.max(state.realm.hearts - 1, 0),
+          },
+        })),
+
+      updateSavingsProgress: (achieved) =>
+        set((state) => ({
+          ...state,
+          realm: {
+            ...state.realm,
+            savingsAchieved: achieved,
+          },
+        })),
+
+      updateTier: (tier) =>
+        set((state) => ({
+          ...state,
+          realm: {
+            ...state.realm,
+            tier,
+          },
+        })),
+
+      // Chat Actions
+      setChatHistory: (messages) =>
+        set((state) => ({ ...state, chatHistory: messages })),
+
+      clearChatHistory: () => set((state) => ({ ...state, chatHistory: [] })),
 
       // Reset Action
       reset: () => set(initialState),

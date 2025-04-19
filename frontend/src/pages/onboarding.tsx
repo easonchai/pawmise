@@ -19,6 +19,16 @@ const DOGS = [
     image: "/dogs/pom.png",
   },
   {
+    breed: "mongrel",
+    name: "Fanshu",
+    image: "/dogs/mongrel.png",
+  },
+  {
+    breed: "korat",
+    name: "Lulu",
+    image: "/dogs/korat.png",
+  },
+  {
     breed: "chihuahua",
     name: "Cheeky",
     image: "/dogs/chihuahua.png",
