@@ -1,20 +1,17 @@
 import type React from "react";
-
 import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
+import Image from "next/image";
+import { TreatDialog } from "./treat-dialog";
 
-export type FabOption = {
-  icon: React.ReactNode;
-  label: string;
-  onClick: () => void;
-  color?: string;
+export type TreatOption = {
+  amount: number;
+  onClick: (amount: number) => void;
 };
 
 interface RadialFabProps {
-  options: FabOption[];
-  icon?: React.ReactNode;
+  options: TreatOption[];
   className?: string;
   buttonClassName?: string;
   optionClassName?: string;
@@ -23,16 +20,31 @@ interface RadialFabProps {
 
 export function RadialFab({
   options = [],
-  icon = <Plus className="h-6 w-6" />,
   className,
   buttonClassName,
   optionClassName,
   radius = 100,
 }: RadialFabProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [selectedOption, setSelectedOption] = useState<TreatOption | null>(
+    null
+  );
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const toggleOpen = () => setIsOpen(!isOpen);
+
+  const handleOptionClick = (option: TreatOption) => {
+    setSelectedOption(option);
+    setIsDialogOpen(true);
+    setIsOpen(false);
+  };
+
+  const handleDialogConfirm = (amount: number) => {
+    if (selectedOption) {
+      selectedOption.onClick(amount);
+    }
+  };
 
   // Only use up to 3 options
   const visibleOptions = options.slice(0, 3);
@@ -52,14 +64,12 @@ export function RadialFab({
                 <motion.button
                   key={i}
                   className={cn(
-                    "absolute flex h-12 w-12 items-center justify-center rounded-full shadow-lg",
-                    option.color || "bg-primary text-primary-foreground",
+                    "absolute flex h-16 w-16 items-center justify-center rounded-full shadow-lg bg-[#392E1F] text-primary-foreground",
                     optionClassName
                   )}
                   style={{
-                    // Position at the center of the main button
-                    bottom: "8px", // Half of main button height
-                    right: "8px", // Half of main button width
+                    bottom: "8px",
+                    right: "8px",
                   }}
                   initial={{ opacity: 0, y: 0, x: 0 }}
                   animate={{
@@ -74,14 +84,21 @@ export function RadialFab({
                     x: 0,
                     transition: { duration: 0.2 },
                   }}
-                  onClick={() => {
-                    option.onClick();
-                    setIsOpen(false);
-                  }}
-                  aria-label={option.label}
-                  title={option.label}
+                  onClick={() => handleOptionClick(option)}
+                  aria-label={`${option.amount} treats`}
+                  title={`${option.amount} treats`}
                 >
-                  {option.icon}
+                  <div className="flex flex-col items-center">
+                    <span className="text-lg font-bold">{option.amount}</span>
+                    <div className="relative w-6 h-6">
+                      <Image
+                        src="/icons/treat.png"
+                        alt="Treat"
+                        fill
+                        className="object-contain"
+                      />
+                    </div>
+                  </div>
                 </motion.button>
               );
             })}
@@ -97,9 +114,24 @@ export function RadialFab({
           animate={isOpen ? { rotate: 45 } : { rotate: 0 }}
           aria-label={isOpen ? "Close menu" : "Open menu"}
         >
-          {icon}
+          <Image
+            src="/icons/treat.png"
+            alt="Treat"
+            fill
+            className="object-contain p-2"
+          />
         </motion.button>
       </div>
+
+      {/* Treat Dialog */}
+      {selectedOption && (
+        <TreatDialog
+          isOpen={isDialogOpen}
+          onClose={() => setIsDialogOpen(false)}
+          initialAmount={selectedOption.amount}
+          onConfirm={handleDialogConfirm}
+        />
+      )}
     </div>
   );
 }

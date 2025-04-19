@@ -3,12 +3,19 @@
 import Image from "next/image";
 import { useRouter } from "next/router";
 import { RadialFab } from "@/components/ui/radial-fab";
-import { Camera, Edit, Settings } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Dialog } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { useDisconnectWallet } from "@mysten/dapp-kit";
 import { useAppStore } from "@/store";
+
 interface BottomNavProps {
   currentPath: string;
   onChatClick?: () => void;
@@ -23,34 +30,22 @@ export function BottomNav({ currentPath, onChatClick }: BottomNavProps) {
 
   const fabOptions = [
     {
-      icon: <Camera className="h-5 w-5" />,
-      label: "Take Photo",
-      onClick: () =>
-        console.log({
-          title: "Camera",
-          description: "Camera option clicked",
-        }),
-      color: "bg-blue-500 text-white",
+      amount: 1,
+      onClick: (amount: number) => {
+        console.log(`Giving ${amount} treats`);
+      },
     },
     {
-      icon: <Edit className="h-5 w-5" />,
-      label: "Edit",
-      onClick: () =>
-        console.log({
-          title: "Edit",
-          description: "Edit option clicked",
-        }),
-      color: "bg-green-500 text-white",
+      amount: 5,
+      onClick: (amount: number) => {
+        console.log(`Giving ${amount} treats`);
+      },
     },
     {
-      icon: <Settings className="h-5 w-5" />,
-      label: "Settings",
-      onClick: () =>
-        console.log({
-          title: "Settings",
-          description: "Settings option clicked",
-        }),
-      color: "bg-purple-500 text-white",
+      amount: 50,
+      onClick: (amount: number) => {
+        console.log(`Giving ${amount} treats`);
+      },
     },
   ];
 
@@ -94,9 +89,6 @@ export function BottomNav({ currentPath, onChatClick }: BottomNavProps) {
         <div className="flex-1 flex justify-center -mt-16">
           <RadialFab
             options={fabOptions}
-            icon={
-              <Image src="/icons/treat.png" alt="Bone" width={32} height={32} />
-            }
             buttonClassName="bg-[#392E1F] border-0"
           />
         </div>
@@ -129,49 +121,66 @@ export function BottomNav({ currentPath, onChatClick }: BottomNavProps) {
         </div>
       </nav>
 
-      {/* Dialogs */}
-      <Dialog
-        open={emergencyOpen}
-        onOpenChange={setEmergencyOpen}
-        title="Emergency Withdrawals"
-        description="At any point in time, you may request for an emergency withdrawal. This will allow you to withdraw everything, no questions asked.
-
-But in doing so, your guardian will fall. Your realm, everything you've built, will be sealed and archived forever. You will start again, with a new companion, a new dream.
-
-Are you sure you're prepared for this?"
-      >
-        <Button
-          variant="emergencyDestructive"
-          className="flex-1"
-          onClick={() => setEmergencyOpen(false)}
-        >
-          Cancel
-        </Button>
-        <Button
-          variant="emergency"
-          className="flex-1"
-          onClick={() => {
-            console.log("Emergency withdrawal initiated");
-            setEmergencyOpen(false);
-          }}
-        >
-          Yes, withdraw
-        </Button>
+      {/* Emergency Dialog */}
+      <Dialog open={emergencyOpen} onOpenChange={setEmergencyOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Emergency Withdrawals</DialogTitle>
+            <DialogDescription className="text-left">
+              At any point in time, you may request for an emergency withdrawal.
+              This will allow you to withdraw everything, no questions asked.
+              <br />
+              But in doing so, your guardian will fall. Your realm, everything
+              you&apos;ve built, will be sealed and archived forever. You will
+              start again, with a new companion, a new dream.
+              <br />
+              <br />
+              <b>Are you sure you&apos;re prepared for this?</b>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <div className="flex flex-row gap-x-2 mt-4">
+              <Button
+                variant="emergencyDestructive"
+                className="flex-1"
+                onClick={() => setEmergencyOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="emergency"
+                className="flex-1"
+                onClick={() => {
+                  console.log("Emergency withdrawal initiated");
+                  setEmergencyOpen(false);
+                }}
+              >
+                Yes, withdraw
+              </Button>
+            </div>
+          </DialogFooter>
+        </DialogContent>
       </Dialog>
 
-      <Dialog
-        open={settingsOpen}
-        onOpenChange={setSettingsOpen}
-        title="Settings"
-        description="Work in progress..."
-      >
-        <Button
-          variant="emergencyDestructive"
-          className="flex-1"
-          onClick={handleLogout}
-        >
-          Log Out
-        </Button>
+      {/* Settings Dialog */}
+      <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Settings</DialogTitle>
+            <DialogDescription className="my-8">
+              Work in progress...
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="emergencyDestructive"
+              className="flex-1"
+              onClick={handleLogout}
+            >
+              Log Out
+            </Button>
+          </DialogFooter>
+        </DialogContent>
       </Dialog>
     </>
   );
