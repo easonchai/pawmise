@@ -2,7 +2,8 @@ import { Chain, PluginBase, createTool } from "@goat-sdk/core";
 import { Transaction } from "@mysten/sui/transactions";
 import { z } from "zod";
 import { SuiWalletClient } from "@goat-sdk/wallet-sui";
-import { send } from "node:process";
+
+const contractAddress = process.env.PAWMISE_ADDRESS;
 
 const mintNFTParametersSchema = z.object({
   // to: z.string().describe("The recipient's address"),
@@ -44,7 +45,7 @@ const mintNFTMethod = async (
   tx.setSender(sender);
   tx.moveCall({
     // WARN: replace first pawmise with contract address
-    target: "pawmise::pawmise::mint",
+    target: `${contractAddress}::pawmise::mint`,
     arguments: [
       tx.object(counterObjectId),
       tx.pure.string("Forest Realm"), // name
@@ -71,7 +72,7 @@ const upgradeNFTMethod = async (
   const tx = new Transaction();
   tx.setSender(walletClient.getAddress());
   tx.moveCall({
-    target: "pawmise::pawmise::upgrade_tier",
+    target: `${contractAddress}::pawmise::upgrade_tier`,
     arguments: [tx.object(nftId)],
   });
 
@@ -93,7 +94,7 @@ const updateDescriptionMethod = async (
   const tx = new Transaction();
   tx.setSender(walletClient.getAddress());
   tx.moveCall({
-    target: "pawmise::pawmise::update_description",
+    target: `${contractAddress}::pawmise::update_description`,
     arguments: [tx.object(nftId), tx.pure.string(description)],
   });
 
@@ -115,7 +116,7 @@ const updateImageUrlMethod = async (
   const tx = new Transaction();
   tx.setSender(walletClient.getAddress());
   tx.moveCall({
-    target: "pawmise::pawmise::update_image_url",
+    target: `${contractAddress}::pawmise::update_image_url`,
     arguments: [tx.object(nftId), tx.pure.string(imageUrl)],
   });
 
@@ -137,7 +138,7 @@ const burnNFTMethod = async (
   const tx = new Transaction();
   tx.setSender(walletClient.getAddress());
   tx.moveCall({
-    target: "pawmise::pawmise::burn",
+    target: `${contractAddress}::pawmise::burn`,
     arguments: [tx.object(nftId)],
   });
 
