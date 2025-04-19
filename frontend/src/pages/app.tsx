@@ -22,8 +22,14 @@ const generateMessageId = () => `msg_${++messageIdCounter}`;
 
 const AppPage: NextPage = () => {
   const router = useRouter();
-  const { realm, selectedDog, userName, updateRealmStatus, setSelectedDog, setGuardianAngel } =
-    useAppStore();
+  const {
+    realm,
+    selectedDog,
+    userName,
+    updateRealmStatus,
+    setSelectedDog,
+    setGuardianAngel,
+  } = useAppStore();
   const [isChatActive, setIsChatActive] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -34,7 +40,7 @@ const AppPage: NextPage = () => {
   const [isDataLoading, setIsDataLoading] = useState(true);
 
   const savingsPercentage = Math.round(
-    (realm.savingsAchieved / realm.savingsGoal) * 100
+    (realm.savingsAchieved / realm.savingsGoal) * 100,
   );
 
   useEffect(() => {
@@ -60,25 +66,26 @@ const AppPage: NextPage = () => {
 
             try {
               const petResponse = await apiService.pet.getActivePetByUserId(
-                userData.id
+                userData.id,
               );
               const petData = petResponse.data;
 
               if (petData) {
                 console.log("Active pet data:", petData);
 
-                const savingsAchieved = parseFloat(petData.balance) / 1000000000;
+                const savingsAchieved =
+                  parseFloat(petData.balance) / 1000000000;
                 console.log("Raw balance from DB:", petData.balance);
                 console.log("Converted savings achieved ($):", savingsAchieved);
                 console.log(
                   "Calculated percentage:",
-                  (savingsAchieved / savingsGoal) * 100
+                  (savingsAchieved / savingsGoal) * 100,
                 );
 
                 // Calculate realm status
                 const realmStatus = calculateRealmStatus(
                   savingsAchieved,
-                  savingsGoal
+                  savingsGoal,
                 );
 
                 // Update realm status in store
@@ -122,17 +129,45 @@ const AppPage: NextPage = () => {
 
   // Initialize chat with welcome message when chat becomes active
   useEffect(() => {
-    if (isChatActive && messages.length === 0 && !isInitializedRef.current) {
-      isInitializedRef.current = true;
-      setMessages([
-        {
-          id: generateMessageId(),
-          content: `Woof woof! Hi ${userName}! How are ya?`,
-          isUser: false,
-        },
-      ]);
-    }
-  }, [isChatActive, messages.length, userName]);
+    const fetchChatMessages = async () => {
+      if (account) {
+        const response = await apiService.ai.getChatHistory(account?.address);
+        const data = response.data;
+        const history = data.history;
+        const processedHistory = history.map(
+          (his: { role: "assistant" | "user"; content: string }) => ({
+            id: generateMessageId(),
+            content: his.content,
+            isUser: his.role === "user",
+          }),
+        );
+        if (processedHistory.length === 0) {
+          setMessages([
+            {
+              id: generateMessageId(),
+              content: `Woof woof! Hi ${userName}! How are ya?`,
+              isUser: false,
+            },
+          ]);
+        } else {
+          setMessages([...processedHistory]);
+        }
+        // console.log("CHAT HIST: ", response.data)
+        isInitializedRef.current = true;
+      }
+    };
+    fetchChatMessages();
+    // if (isChatActive && messages.length === 0 && !isInitializedRef.current) {
+    //   isInitializedRef.current = true;
+    //   setMessages([
+    //     {
+    //       id: generateMessageId(),
+    //       content: `Woof woof! Hi ${userName}! How are ya?`,
+    //       isUser: false,
+    //     },
+    //   ]);
+    // }
+  }, [isChatActive, messages.length, userName, account]);
 
   const handleSendMessage = async (content: string) => {
     if (!account) {
@@ -164,7 +199,9 @@ const AppPage: NextPage = () => {
       //   }),
       // });
 
-      const response = await apiService.ai.chat(account?.address, {message: content})
+      const response = await apiService.ai.chat(account?.address, {
+        message: content,
+      });
       const data = response.data;
 
       // Add dog's response
@@ -268,7 +305,7 @@ const AppPage: NextPage = () => {
           <div
             className={cn(
               "flex-1 flex flex-col items-center justify-end transform",
-              isChatActive ? "translate-y-8" : "translate-y-56"
+              isChatActive ? "translate-y-8" : "translate-y-56",
             )}
           >
             {isChatActive ? (

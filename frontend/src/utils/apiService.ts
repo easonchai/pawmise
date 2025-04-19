@@ -29,6 +29,8 @@ export const apiService = {
   ai: {
     chat: (userAddress: string, payload: { message: string }) =>
       api.post(`ai-agent/${userAddress}`, payload),
+    getChatHistory: (userAddress: string) =>
+      api.get(`ai-agent/history/${userAddress}`),
     emergencyWithdrawal: (address: string) =>
       api.post(`ai-agent/${address}/emergency-withdrawal`),
     stakeAllTokens: (address: string) =>
