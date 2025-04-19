@@ -23,6 +23,7 @@ const AppPage: NextPage = () => {
   const [isChatActive, setIsChatActive] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const isInitializedRef = useRef(false);
 
@@ -62,8 +63,11 @@ const AppPage: NextPage = () => {
     };
     setMessages((prev) => [...prev, userMessage]);
     setIsLoading(true);
+    setIsTyping(true);
 
     try {
+      // Simulate API delay
+      await new Promise((resolve) => setTimeout(resolve, 1500));
       // TODO: Replace with actual API call
       // const response = await fetch("/api/chat", {
       //   method: "POST",
@@ -76,11 +80,6 @@ const AppPage: NextPage = () => {
       //   }),
       // });
 
-      // if (!response.ok) {
-      //   throw new Error("Failed to send message");
-      // }
-
-      // const data = await response.json();
       const data = {
         response: "Hello!",
       };
@@ -97,6 +96,7 @@ const AppPage: NextPage = () => {
       // TODO: Show error toast
     } finally {
       setIsLoading(false);
+      setIsTyping(false);
     }
   };
 
@@ -204,7 +204,7 @@ const AppPage: NextPage = () => {
             {/* Chat Messages */}
             <div
               ref={chatContainerRef}
-              className="h-[calc(45vh-60px)] overflow-y-auto p-4 space-y-4"
+              className="h-[calc(45vh-80px)] overflow-y-auto p-4 space-y-4"
             >
               {messages.map((message) => (
                 <MessageBubble
@@ -216,6 +216,34 @@ const AppPage: NextPage = () => {
                   }
                 />
               ))}
+              {isTyping && (
+                <div className="flex items-center space-x-2">
+                  <div className="flex-shrink-0 h-8 w-8 rounded-full overflow-hidden relative">
+                    <Image
+                      src={selectedDog?.image || "/dogs/pom.png"}
+                      alt={selectedDog?.name || "Guardian Angel"}
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                  <div className="bg-[#FFE9B9] text-[#392E1F] rounded-2xl px-4 py-2 rounded-bl-none">
+                    <div className="flex space-x-1">
+                      <div
+                        className="w-2 h-2 bg-[#392E1F] rounded-full animate-bounce"
+                        style={{ animationDelay: "0ms" }}
+                      />
+                      <div
+                        className="w-2 h-2 bg-[#392E1F] rounded-full animate-bounce"
+                        style={{ animationDelay: "150ms" }}
+                      />
+                      <div
+                        className="w-2 h-2 bg-[#392E1F] rounded-full animate-bounce"
+                        style={{ animationDelay: "300ms" }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Chat Input */}
