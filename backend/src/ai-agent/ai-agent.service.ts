@@ -12,68 +12,75 @@ import { SuiKeyPairWalletClient } from '@goat-sdk/wallet-sui';
 import { getOnChainTools } from '@goat-sdk/adapter-vercel-ai';
 import { TokenPlugin } from './plugins/tokenHandler.plugin';
 import { NftSUIPlugin } from './plugins/nftHandler.plugin';
+import { PetService } from 'src/pet/pet.service';
+
+interface UserToolkit {
+  walletClient: SuiKeyPairWalletClient;
+  tools: ToolSet;
+}
 
 @Injectable()
 export class AiAgentService {
   private readonly logger = new Logger(AiAgentService.name);
-  private wallet: SuiKeyPairWalletClient;
-  private tools: ToolSet;
+  private userToolkits: Map<string, UserToolkit> = new Map();
 
-  constructor(private readonly chatSessionService: ChatSessionService) {
-    // Initialize the wallet asynchronously when service is constructed
-    void this.initializeWallet();
-  }
+  constructor(
+    private readonly chatSessionService: ChatSessionService,
+    private readonly petService: PetService,
+  ) {}
 
   /**
-   * Initialize the wallet and tools
+   * Get or create a toolkit for a user
+   * @param userAddress The user's wallet address
+   * @returns The user's toolkit
    */
-  private async initializeWallet() {
-    try {
-      // Initialize Sui client
-      const suiClient = new SuiClient({
-        url: process.env.SUI_RPC_URL || 'https://fullnode.devnet.sui.io:443',
-      });
-
-      // Create or import a keypair using private key from env
-      const bech32PrivateKey = process.env.PK;
-      if (!bech32PrivateKey) {
-        throw new Error('PK environment variable is not set');
-      }
-
-      const { secretKey } = decodeSuiPrivateKey(bech32PrivateKey);
-      const keypair = Ed25519Keypair.fromSecretKey(secretKey);
-
-      // Initialize the wallet client
-      this.wallet = new SuiKeyPairWalletClient({
-        client: suiClient,
-        keypair: keypair,
-      });
-
-      try {
-        // Get on-chain tools
-        const onChainTools = await getOnChainTools({
-          wallet: this.wallet,
-          plugins: [new NftSUIPlugin(), new TokenPlugin()],
-        });
-
-        // Convert the tools to a format we can work with
-        this.tools = onChainTools as Record<string, any>;
-      } catch (error) {
-        const errorMessage =
-          error instanceof Error ? error.message : String(error);
-        this.logger.error(
-          `Failed to initialize on-chain tools: ${errorMessage}`,
-        );
-        throw new Error(
-          `Failed to initialize blockchain tools: ${errorMessage}`,
-        );
-      }
-
-      this.logger.log('Wallet and tools initialized successfully');
-    } catch (error) {
-      this.logger.error('Failed to initialize wallet:', error);
-      throw error;
+  private async getToolkit(userAddress: string): Promise<UserToolkit> {
+    // Check if we already have a toolkit for this user
+    if (this.userToolkits.has(userAddress)) {
+      return this.userToolkits.get(userAddress)!;
     }
+
+    // Get the user's active pet
+    const pet = await this.petService.getPet({
+      where: { walletAddress: userAddress, active: true },
+    });
+
+    if (!pet) {
+      throw new Error('No active pet found for user');
+    }
+
+    // Get the pet's private key (will generate if not exists)
+    const privateKey = await this.petService.getPetPrivateKey(pet.id);
+
+    // Initialize Sui client
+    const suiClient = new SuiClient({
+      url: process.env.SUI_RPC_URL || 'https://fullnode.devnet.sui.io:443',
+    });
+
+    // Create keypair from private key
+    const { secretKey } = decodeSuiPrivateKey(privateKey);
+    const keypair = Ed25519Keypair.fromSecretKey(secretKey);
+
+    // Create wallet client
+    const walletClient = new SuiKeyPairWalletClient({
+      client: suiClient,
+      keypair: keypair,
+    });
+
+    // Initialize tools for this wallet
+    const tools = await getOnChainTools({
+      wallet: walletClient,
+      plugins: [new NftSUIPlugin(), new TokenPlugin()],
+    }) as ToolSet;
+
+    // Create and store the toolkit
+    const toolkit: UserToolkit = {
+      walletClient,
+      tools,
+    };
+
+    this.userToolkits.set(userAddress, toolkit);
+    return toolkit;
   }
 
   /**
@@ -88,8 +95,8 @@ export class AiAgentService {
   ): Promise<string> {
     this.logger.log(`Processing message for user: ${userAddress}`);
 
-    // Get existing history
-    const history = this.chatSessionService.getSessionHistory(userAddress);
+    // Get the user's toolkit
+    const toolkit = await this.getToolkit(userAddress);
 
     // Add user message to history
     this.chatSessionService.addMessage(userAddress, {
@@ -98,11 +105,10 @@ export class AiAgentService {
     });
 
     // Get updated history after adding user message
-    const updatedHistory =
-      this.chatSessionService.getSessionHistory(userAddress);
+    const updatedHistory = this.chatSessionService.getSessionHistory(userAddress);
 
     // Generate response
-    const aiResponse = await this.chat(updatedHistory);
+    const aiResponse = await this.chat(updatedHistory, toolkit);
 
     // Store AI response
     this.chatSessionService.addMessage(userAddress, {
@@ -116,22 +122,14 @@ export class AiAgentService {
   /**
    * Generate AI response based on conversation history
    * @param history Conversation history
+   * @param toolkit The user's toolkit
    * @returns AI response text
    */
-  async chat(history: Message[]): Promise<string> {
+  async chat(history: Message[], toolkit: UserToolkit): Promise<string> {
     try {
-      // Wait for tools to be initialized if they're not ready yet
-      if (Object.keys(this.tools).length === 0) {
-        this.logger.log('Waiting for tools initialization...');
-        await this.initializeWallet();
-      }
-
-      // Create a formatted history with system message if not present
-      // const formattedHistory = this.ensureSystemMessage(history);
-
       const result = await generateText({
         model: openai(process.env.OPENAI_MODEL || 'gpt-4o-mini'),
-        tools: this.tools,
+        tools: toolkit.tools,
         maxSteps: 10,
         messages: history,
         onStepFinish: (event) => {
@@ -141,9 +139,7 @@ export class AiAgentService {
 
       return result.text;
     } catch (error) {
-      // Safe error handling
-      const errorMessage =
-        error instanceof Error ? error.message : String(error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
       this.logger.error(`Error generating AI response: ${errorMessage}`);
       return "I'm sorry, I encountered an error while processing your request.";
     }
@@ -158,30 +154,20 @@ export class AiAgentService {
   }
 
   /**
-   * Ensure the history has a system message
+   * Get wallet address for a user
+   * @param userAddress The user's wallet address
+   * @returns The pet's wallet address
    */
-  // private ensureSystemMessage(history: Message[]): Message[] {
-  //   const hasSystemMessage = history.some((msg) => msg.role === 'system');
-  //
-  //   if (!hasSystemMessage) {
-  //     return [
-  //       {
-  //         role: 'system',
-  //         content:
-  //           'You are a helpful assistant with access to Sui blockchain tools. Answer concisely and accurately.',
-  //       },
-  //       ...history,
-  //     ];
-  //   }
-  //
-  //   return history;
-  // }
+  async getWalletAddress(userAddress: string): Promise<string> {
+    const toolkit = await this.getToolkit(userAddress);
+    return toolkit.walletClient.getAddress();
+  }
 
   /**
-   * Get wallet address
-   * @returns The current wallet address
+   * Clear a user's toolkit from cache
+   * @param userAddress The user's wallet address
    */
-  getWalletAddress(): string {
-    return this.wallet ? this.wallet.getAddress() : 'Wallet not initialized';
+  clearToolkit(userAddress: string) {
+    this.userToolkits.delete(userAddress);
   }
 }

@@ -15,28 +15,40 @@ datasource db {
 }
 
 model User {
-  id               String    @id @default(cuid())
-  walletAddress    String    @unique
-  username         String
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
-  deletedAt        DateTime?
+  id            String    @id @default(cuid())
+  walletAddress String    @unique
+  username      String
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  deletedAt     DateTime?
 
-  pets             Pet[]
+  pets Pet[]
+}
+
+enum Breed {
+  POM
+  MONGREL
+  KORAT
+  CHIHUAHUA
+  CORGI
+  SHIHTZU
+  GOLDIE
 }
 
 model Pet {
-  id               String    @id @default(cuid())
-  walletAddress    String    @unique
-  balance          BigInt    @default(0)
-  name             String
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
-  deletedAt        DateTime?
-  active           Boolean
+  id            String    @id @default(cuid())
+  walletAddress String?   @unique
+  balance       BigInt    @default(0)
+  name          String
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  deletedAt     DateTime?
+  active        Boolean
+  privateKey    String?
+  breed         Breed
 
-  user             User      @relation(fields: [userId], references: [id])
-  userId           String
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
 
   @@unique([userId, active], name: "oneActivePetPerUser", map: "one_active_pet_per_user_idx")
   @@index([userId, active])
