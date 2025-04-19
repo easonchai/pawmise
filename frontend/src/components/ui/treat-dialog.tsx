@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -24,6 +24,11 @@ export function TreatDialog({
   onConfirm,
 }: TreatDialogProps) {
   const [amount, setAmount] = useState(initialAmount.toString());
+
+  // Update amount when initialAmount changes
+  useEffect(() => {
+    setAmount(initialAmount.toString());
+  }, [initialAmount]);
 
   const handleConfirm = () => {
     const parsedAmount = parseInt(amount, 10);
