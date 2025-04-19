@@ -24,5 +24,8 @@ export const apiService = {
     getActivePetByUserId: (userId: string) =>
       api.get(`pet/active/user/${userId}`),
   },
-  ai: {},
+  ai: {
+    emergencyWithdrawal: (address: string) =>
+      api.post(`ai-agent/${address}/emergency-withdrawal`),
+  },
 };
