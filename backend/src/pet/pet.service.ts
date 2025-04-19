@@ -245,4 +245,15 @@ export class PetService {
       },
     });
   }
+
+  async updatePetActive(petId: string, active: boolean): Promise<Pet> {
+    const pet = await this.prisma.pet.findUnique({ where: { id: petId } });
+    if (!pet) throw new NotFoundException(`Pet with ID ${petId} not found`);
+
+    this.logger.debug(`Setting pet ${petId} active status to ${active}`);
+    return await this.prisma.pet.update({
+      where: { id: petId },
+      data: { active },
+    });
+  }
 }

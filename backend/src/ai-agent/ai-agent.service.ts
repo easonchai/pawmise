@@ -178,6 +178,8 @@ export class AiAgentService {
         },
       });
 
+      await this.petService.updatePetActive(pet.id, false);
+
       return {
         success: true,
         message: result.text,
