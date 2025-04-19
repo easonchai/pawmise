@@ -1,0 +1,84 @@
+import {
+  Controller,
+  Post,
+  Body,
+  Param,
+  Get,
+  Delete,
+  Logger,
+} from '@nestjs/common';
+import { AiAgentService } from '../ai-agent/ai-agent.service';
+
+class SendMessageDto {
+  message: string;
+}
+
+@Controller('ai-agent')
+export class AiAgentController {
+  private readonly logger = new Logger(AiAgentController.name);
+
+  constructor(private readonly aiAgentService: AiAgentService) {}
+
+  @Post(':userAddress')
+  async sendMessage(
+    @Param('userAddress') userAddress: string,
+    @Body() messageDto: SendMessageDto,
+  ) {
+    this.logger.log(
+      `Received message from ${userAddress}: ${messageDto.message}`,
+    );
+
+    try {
+      // Ensure the address is properly formatted
+      const response = await this.aiAgentService.processMessage(
+        messageDto.message,
+        userAddress as `0x${string}`,
+      );
+
+      return {
+        success: true,
+        message: response,
+      };
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      const errorStack = error instanceof Error ? error.stack : undefined;
+
+      this.logger.error(
+        `Error processing message: ${errorMessage}`,
+        errorStack,
+      );
+      return {
+        success: false,
+        error: 'Failed to process message',
+      };
+    }
+  }
+
+  @Get(':userAddress/history')
+  getHistory(@Param('userAddress') userAddress: string) {
+    const history = this.aiAgentService.getSessionHistory(userAddress);
+
+    // For privacy/security, only return the role and content, not any internal properties
+    // const sanitizedHistory = history.map((message) => ({
+    //   role: message.role,
+    //   content: message.content,
+    // }));
+
+    return {
+      success: true,
+      history: history,
+    };
+  }
+
+  @Delete(':userAddress')
+  clearChat(@Param('userAddress') userAddress: string) {
+    const wasDeleted = this.aiAgentService.clearSessionHistory(
+      userAddress as `0x${string}`,
+    );
+
+    return {
+      success: wasDeleted,
+    };
+  }
+}

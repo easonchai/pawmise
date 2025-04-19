@@ -6,6 +6,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { AiAgentModule } from './ai-agent/ai-agent.module';
 import { UserModule } from './user/user.module';
 import { PetModule } from './pet/pet.module';
+import { ChatSessionModule } from './chat-session/chat-session.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { PetModule } from './pet/pet.module';
     AiAgentModule,
     UserModule,
     PetModule,
+    ChatSessionModule,
   ],
   controllers: [AppController],
   providers: [AppService],
