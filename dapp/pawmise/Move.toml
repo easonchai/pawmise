@@ -4,11 +4,6 @@ edition = "2024.beta"
 
 [dependencies]
 
-[dependencies.liquid_staking]
-git = "https://github.com/solendprotocol/liquid-staking.git"
-subdir = "contracts"
-rev = "main"
-
 [addresses]
 pawmise = "0x0"
 
