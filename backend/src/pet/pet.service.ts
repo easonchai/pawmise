@@ -99,20 +99,64 @@ export class PetService {
     return this.decryptPrivateKey(pet.privateKey);
   }
 
+  // async getPet<T extends Prisma.PetInclude | undefined = undefined>(params: {
+  //   where: Prisma.PetWhereUniqueInput;
+  //   include?: T;
+  // }): Promise<Prisma.PetGetPayload<{ include: T }> | null> {
+  //   const { where, include } = params;
+  //   this.logger.debug(`Finding user with criteria: ${JSON.stringify(where)}`);
+
+  //   try {
+  //     const user = this.prisma.pet.findUnique({
+  //       where,
+  //       include,
+  //     }) as Promise<Prisma.PetGetPayload<{ include: T }> | null>;
+
+  //     if (await user) {
+  //       this.logger.debug(`Found pet with address: ${where.walletAddress}`);
+  //     } else {
+  //       this.logger.debug(
+  //         `No pet found for criteria: ${JSON.stringify(where)}`,
+  //       );
+  //     }
+
+  //     return user;
+  //   } catch (error) {
+  //     this.logger.error(`Error finding pet: ${error}`);
+  //     throw error;
+  //   }
+  // }
+
   async getPet<T extends Prisma.PetInclude | undefined = undefined>(params: {
     where: Prisma.PetWhereUniqueInput;
     include?: T;
-  }): Promise<Prisma.PetGetPayload<{ include: T }> | null> {
+  }): Promise<Omit<Prisma.PetGetPayload<{ include: T }>, 'privateKey'> | null> {
     const { where, include } = params;
     this.logger.debug(`Finding user with criteria: ${JSON.stringify(where)}`);
 
     try {
-      const user = this.prisma.pet.findUnique({
+      const pet = await this.prisma.pet.findUnique({
         where,
-        include,
-      }) as Promise<Prisma.PetGetPayload<{ include: T }> | null>;
+        select: {
+          ...Object.keys(include || {}).reduce(
+            (acc, key) => ({ ...acc, [key]: true }),
+            {},
+          ),
+          id: true,
+          walletAddress: true,
+          balance: true,
+          name: true,
+          createdAt: true,
+          updatedAt: true,
+          deletedAt: true,
+          active: true,
+          breed: true,
+          userId: true,
+          user: include?.user || false,
+        },
+      });
 
-      if (await user) {
+      if (pet) {
         this.logger.debug(`Found pet with address: ${where.walletAddress}`);
       } else {
         this.logger.debug(
@@ -120,7 +164,10 @@ export class PetService {
         );
       }
 
-      return user;
+      return pet as Omit<
+        Prisma.PetGetPayload<{ include: T }>,
+        'privateKey'
+      > | null;
     } catch (error) {
       this.logger.error(`Error finding pet: ${error}`);
       throw error;

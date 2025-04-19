@@ -196,7 +196,7 @@ public fun update_image_url(
     });
 }
 
-public entry fun burn(nft: RealmNFT, ctx: &mut TxContext) {
+public fun burn(nft: RealmNFT, ctx: &mut TxContext) {
     let current_epoch = tx_context::epoch(ctx);
 
     event::emit(NFTBurned {
@@ -217,7 +217,8 @@ public entry fun burn(nft: RealmNFT, ctx: &mut TxContext) {
         destroyed_at: _,
     } = nft;
 
-    object::delete(id);
+    // object::delete(id);
+    id.delete();
 }
 
 // === View Functions ===
