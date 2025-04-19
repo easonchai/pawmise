@@ -13,6 +13,7 @@ import { getOnChainTools } from '@goat-sdk/adapter-vercel-ai';
 import { TokenPlugin } from './plugins/tokenHandler.plugin';
 import { NftSUIPlugin } from './plugins/nftHandler.plugin';
 import { PetService } from 'src/pet/pet.service';
+import { UserService } from 'src/user/user.service';
 
 interface UserToolkit {
   walletClient: SuiKeyPairWalletClient;
@@ -27,6 +28,7 @@ export class AiAgentService {
   constructor(
     private readonly chatSessionService: ChatSessionService,
     private readonly petService: PetService,
+    private readonly userService: UserService,
   ) {}
 
   /**
@@ -40,9 +42,21 @@ export class AiAgentService {
       return this.userToolkits.get(userAddress)!;
     }
 
-    // Get the user's active pet
+    const user = await this.userService.getUser({
+      where: { walletAddress: userAddress },
+    });
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
     const pet = await this.petService.getPet({
-      where: { walletAddress: userAddress, active: true },
+      where: {
+        oneActivePetPerUser: {
+          userId: user.id,
+          active: true,
+        },
+      },
     });
 
     if (!pet) {

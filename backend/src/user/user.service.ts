@@ -8,13 +8,17 @@ export class UserService {
 
   constructor(private readonly prisma: PrismaService) {}
 
-  async getOrCreateUser(walletAddress: `0x${string}`): Promise<User> {
+  async getOrCreateUser(
+    walletAddress: `0x${string}`,
+    savingsGoal: bigint,
+  ): Promise<User> {
     return this.prisma.user.upsert({
       where: { walletAddress: walletAddress },
       update: {},
       create: {
         username: `User${walletAddress}`,
-        walletAddress: walletAddress,
+        walletAddress,
+        savingsGoal,
       },
     });
   }

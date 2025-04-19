@@ -12,7 +12,10 @@ export class UserController {
   @Post()
   @ApiOperation({ summary: 'Creates a new user' })
   async createUser(@Body() createUserDto: CreateUserDto) {
-    return await this.userService.getOrCreateUser(createUserDto.walletAddress);
+    return await this.userService.getOrCreateUser(
+      createUserDto.walletAddress,
+      createUserDto.savingsGoal,
+    );
   }
 
   @Get('/address/:address')
