@@ -14,6 +14,8 @@ import { TokenPlugin } from './plugins/tokenHandler.plugin';
 import { NftSUIPlugin } from './plugins/nftHandler.plugin';
 import { PetService } from 'src/pet/pet.service';
 import { UserService } from 'src/user/user.service';
+import { MockTokenPlugin } from './plugins/stakeContractHandler.plugin';
+import { systemPrompt } from './prompts/systemPrompt';
 
 interface UserToolkit {
   walletClient: SuiKeyPairWalletClient;
@@ -84,7 +86,7 @@ export class AiAgentService {
     // Initialize tools for this wallet
     const tools = (await getOnChainTools({
       wallet: walletClient,
-      plugins: [new NftSUIPlugin(), new TokenPlugin()],
+      plugins: [new NftSUIPlugin(), new TokenPlugin(), new MockTokenPlugin()],
     })) as ToolSet;
 
     // Create and store the toolkit
@@ -146,6 +148,7 @@ export class AiAgentService {
         model: openai(process.env.OPENAI_MODEL || 'gpt-4o-mini'),
         tools: toolkit.tools,
         maxSteps: 10,
+        system: systemPrompt,
         messages: history,
         onStepFinish: (event) => {
           this.logger.debug('Tool execution result:', event.toolResults);

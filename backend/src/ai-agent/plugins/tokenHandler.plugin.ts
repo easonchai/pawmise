@@ -1,12 +1,12 @@
-import { Chain, PluginBase, createTool } from "@goat-sdk/core";
-import { Transaction } from "@mysten/sui/transactions";
-import { z } from "zod";
-import { SuiWalletClient } from "@goat-sdk/wallet-sui";
+import { Chain, PluginBase, createTool } from '@goat-sdk/core';
+import { Transaction } from '@mysten/sui/transactions';
+import { z } from 'zod';
+import { SuiWalletClient } from '@goat-sdk/wallet-sui';
 
 const COMMON_TOKENS = {
-  SUI: "0x2::sui::SUI",
-  USDC: "0x5d4b302506645c37ff133b98c4b50a5ae14841659738d6d733d59d0d217a93bf::coin::COIN", // Example address
-  USDT: "0x4d08e8a307bd2283de88e3ee76258892b14be40a77bf6daadf6d4e7f89b6f6af::coin::COIN", // Example address
+  SUI: '0x2::sui::SUI',
+  USDC: '0x5d4b302506645c37ff133b98c4b50a5ae14841659738d6d733d59d0d217a93bf::coin::COIN', // Example address
+  USDT: '0x4d08e8a307bd2283de88e3ee76258892b14be40a77bf6daadf6d4e7f89b6f6af::coin::COIN', // Example address
 } as const;
 
 // ---------------------HELPER FUNCTIONS-------------------------------
@@ -30,7 +30,7 @@ async function getTokenMetadata(
   // For SUI, we can assume standard values
   if (coinType === COMMON_TOKENS.SUI) {
     return {
-      symbol: "SUI",
+      symbol: 'SUI',
       decimals: 9, // SUI has 9 decimals
     };
   }
@@ -44,13 +44,14 @@ async function getTokenMetadata(
     // to fetch coin metadata based on the coin type
     const metadata = await client.getCoinMetadata({ coinType });
     return {
-      symbol: metadata?.symbol || coinType.split("::").pop() || "UNKNOWN",
+      symbol: metadata?.symbol || coinType.split('::').pop() || 'UNKNOWN',
       decimals: metadata?.decimals || 9, // Default to 9 if unknown
     };
   } catch (error) {
+    console.error(error);
     // If metadata fetch fails, use reasonable defaults
     return {
-      symbol: coinType.split("::")[2] || "TOKEN",
+      symbol: coinType.split('::')[2] || 'TOKEN',
       decimals: 9,
     };
   }
@@ -59,10 +60,10 @@ async function getTokenMetadata(
 // NOTE: This is in mist or whatever it is, so have to multiply 1e9
 const sendTokenParametersSchema = z.object({
   to: z.string().describe("The recipient's address"),
-  amount: z.number().describe("The amount of token to send"),
+  amount: z.number().describe('The amount of token to send'),
   tokenType: z
-    .enum(["SUI", "USDC", "USDT"])
-    .describe("The type of token to send"),
+    .enum(['SUI', 'USDC', 'USDT'])
+    .describe('The type of token to send'),
 });
 
 const viewBalanceParametersSchema = z.object({
@@ -70,15 +71,15 @@ const viewBalanceParametersSchema = z.object({
     .string()
     .optional()
     .describe(
-      "The address to check (defaults to current wallet if not provided)",
+      'The address to check (defaults to current wallet if not provided)',
     ),
   formatted: z
     .boolean()
     .optional()
-    .describe("Whether to return a human-readable format"),
+    .describe('Whether to return a human-readable format'),
   tokenType: z
-    .enum(["SUI", "USDC", "USDT"])
-    .describe("The type of token to send"),
+    .enum(['SUI', 'USDC', 'USDT'])
+    .describe('The type of token to send'),
 });
 
 const sendTokenMethod = async (
@@ -87,9 +88,9 @@ const sendTokenMethod = async (
 ) => {
   const { to, amount, tokenType } = parameters;
   const tx = new Transaction();
-  
+
   // For SUI tokens, use the simpler approach
-  if (tokenType === "SUI") {
+  if (tokenType === 'SUI') {
     // Simple SUI transfer using gas object
     const [coin] = tx.splitCoins(tx.gas, [amount]);
     tx.transferObjects([coin], to);
@@ -97,49 +98,53 @@ const sendTokenMethod = async (
     // For other tokens, we need to look them up first
     const actualTokenType = COMMON_TOKENS[tokenType];
     const tokens = await getCoinsOfType(walletClient, actualTokenType);
-    
+
     if (tokens.length === 0) {
       throw new Error(`No ${tokenType} tokens found in wallet`);
     }
-    
+
     // Use the first coin object that has enough balance
-    const suitableCoin = tokens.find(token => Number(token.balance) >= amount);
-    
+    const suitableCoin = tokens.find(
+      (token) => Number(token.balance) >= amount,
+    );
+
     if (suitableCoin) {
       // If we found a single coin with enough balance, use it directly
-      const [splitToken] = tx.splitCoins(tx.object(suitableCoin.coinObjectId), [amount]);
+      const [splitToken] = tx.splitCoins(tx.object(suitableCoin.coinObjectId), [
+        amount,
+      ]);
       tx.transferObjects([splitToken], to);
     } else {
       // If no single coin has enough, merge coins until we have enough
       let totalBalance = 0;
-      const tokensToUse = [];
-      
+      const tokensToUse: string[] = [];
+
       // Find coins to merge until we have enough balance
       for (const token of tokens) {
         totalBalance += Number(token.balance);
         tokensToUse.push(token.coinObjectId);
-        
+
         if (totalBalance >= amount) break;
       }
-      
+
       if (totalBalance < amount) {
         throw new Error(
-          `Insufficient ${tokenType} balance: have ${totalBalance}, need ${amount}`
+          `Insufficient ${tokenType} balance: have ${totalBalance}, need ${amount}`,
         );
       }
-      
+
       // Merge coins and split the amount
       const primaryToken = tx.object(tokensToUse[0]);
       if (tokensToUse.length > 1) {
-        const otherTokens = tokensToUse.slice(1).map(id => tx.object(id));
+        const otherTokens = tokensToUse.slice(1).map((id) => tx.object(id));
         tx.mergeCoins(primaryToken, otherTokens);
       }
-      
+
       const [splitToken] = tx.splitCoins(primaryToken, [amount]);
       tx.transferObjects([splitToken], to);
     }
   }
-  
+
   // Build and send the transaction
   return walletClient.sendTransaction({
     transaction: tx,
@@ -201,7 +206,7 @@ const viewBalanceMethod = async (
   walletClient: SuiWalletClient,
   parameters: z.infer<typeof viewBalanceParametersSchema>,
 ) => {
-  const address = parameters.address || walletClient.getAddress();
+  // const address = parameters.address || walletClient.getAddress();
   const tokenType = parameters.tokenType;
   const actualTokenType = COMMON_TOKENS[tokenType];
 
@@ -235,16 +240,16 @@ const viewBalanceMethod = async (
 
 export class TokenPlugin extends PluginBase<SuiWalletClient> {
   constructor() {
-    super("tokenTools", []);
+    super('tokenTools', []);
   }
 
-  supportsChain = (chain: Chain) => chain.type === "sui";
+  supportsChain = (chain: Chain) => chain.type === 'sui';
 
   getTools(walletClient: SuiWalletClient) {
     const sendTool = createTool(
       {
-        name: "send_tokens",
-        description: "Send tokens to an address.",
+        name: 'send_tokens',
+        description: 'Send tokens to an address.',
         parameters: sendTokenParametersSchema,
       },
       // Implement the method
@@ -253,14 +258,14 @@ export class TokenPlugin extends PluginBase<SuiWalletClient> {
     );
     const viewBalanceTool = createTool(
       {
-        name: "view_balance",
-        description: "View balance of a token of an address.",
+        name: 'view_balance',
+        description: 'View balance of a token of an address.',
         parameters: viewBalanceParametersSchema,
       },
       // Implement the method
       (parameters: z.infer<typeof viewBalanceParametersSchema>) =>
         viewBalanceMethod(walletClient, parameters),
-    )
+    );
     return [sendTool, viewBalanceTool];
   }
 }
