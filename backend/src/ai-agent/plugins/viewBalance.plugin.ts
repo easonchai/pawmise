@@ -1,34 +1,34 @@
-import { Chain, PluginBase, createTool } from "@goat-sdk/core";
+import { Chain, PluginBase, createTool } from '@goat-sdk/core';
 // import { Transaction } from "@mysten/sui/transactions";
-import { z } from "zod";
-import { SuiWalletClient } from "@goat-sdk/wallet-sui";
+import { z } from 'zod';
+import { SuiWalletClient } from '@goat-sdk/wallet-sui';
 
 const viewBalanceParametersSchema = z.object({
   address: z
     .string()
     .optional()
     .describe(
-      "The address to check (defaults to current wallet if not provided)",
+      'The address to check (defaults to current wallet if not provided)',
     ),
   formatted: z
     .boolean()
     .optional()
-    .describe("Whether to return a human-readable format"),
+    .describe('Whether to return a human-readable format'),
 });
 
 export class ViewSUIBalancePlugin extends PluginBase<SuiWalletClient> {
   constructor() {
-    super("viewSUIBalance", []);
+    super('viewSUIBalance', []);
   }
 
-  supportsChain = (chain: Chain) => chain.type === "sui";
+  supportsChain = (chain: Chain) => chain.type === 'sui';
 
   getTools(walletClient: SuiWalletClient) {
     return [
       createTool(
         {
-          name: "view_balance",
-          description: "View balance of an address.",
+          name: 'view_balance',
+          description: 'View balance of an address.',
           parameters: viewBalanceParametersSchema,
         },
         async (parameters) => {

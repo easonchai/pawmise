@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Prisma, Pet } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import crypto from 'crypto';
@@ -9,6 +9,12 @@ export class PetService {
   private readonly logger = new Logger(PetService.name);
 
   constructor(private readonly prisma: PrismaService) {}
+
+  async createPet(data: Prisma.PetCreateInput): Promise<Pet> {
+    return this.prisma.pet.create({
+      data,
+    });
+  }
 
   /**
    * Get or create a passphrase for encryption
@@ -98,34 +104,6 @@ export class PetService {
 
     return this.decryptPrivateKey(pet.privateKey);
   }
-
-  // async getPet<T extends Prisma.PetInclude | undefined = undefined>(params: {
-  //   where: Prisma.PetWhereUniqueInput;
-  //   include?: T;
-  // }): Promise<Prisma.PetGetPayload<{ include: T }> | null> {
-  //   const { where, include } = params;
-  //   this.logger.debug(`Finding user with criteria: ${JSON.stringify(where)}`);
-
-  //   try {
-  //     const user = this.prisma.pet.findUnique({
-  //       where,
-  //       include,
-  //     }) as Promise<Prisma.PetGetPayload<{ include: T }> | null>;
-
-  //     if (await user) {
-  //       this.logger.debug(`Found pet with address: ${where.walletAddress}`);
-  //     } else {
-  //       this.logger.debug(
-  //         `No pet found for criteria: ${JSON.stringify(where)}`,
-  //       );
-  //     }
-
-  //     return user;
-  //   } catch (error) {
-  //     this.logger.error(`Error finding pet: ${error}`);
-  //     throw error;
-  //   }
-  // }
 
   async getPet<T extends Prisma.PetInclude | undefined = undefined>(params: {
     where: Prisma.PetWhereUniqueInput;
