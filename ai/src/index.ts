@@ -17,6 +17,11 @@ import { viewBalance } from "plugins/viewBalance.plugin";
 import { TokenPlugin } from "plugins/tokenHandler.plugin";
 import { NftSUIPlugin } from "plugins/nftHandler.plugin";
 
+export interface Message {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
 dotenv.config();
 
 // Step 1: Initialize Sui client and wallet
@@ -41,6 +46,8 @@ const walletClient = new SuiKeyPairWalletClient({
   keypair: keypair,
 });
 
+const history = [];
+
 (async () => {
   // 2. Get your onchain tools for your wallet
   const tools = await getOnChainTools({
@@ -59,6 +66,12 @@ const walletClient = new SuiKeyPairWalletClient({
       rl.question('Enter your prompt (or "exit" to quit): ', resolve);
     });
 
+    const newMessage: Message = {
+      role: 'user', content: prompt
+    }
+
+    history.push(newMessage);
+
     if (prompt === "exit") {
       rl.close();
       break;
@@ -68,11 +81,12 @@ const walletClient = new SuiKeyPairWalletClient({
     console.log("TOOLS CALLED");
     console.log("\n-------------------\n");
     try {
-      const result = await generateText({
+      const result: any = await generateText({
         model: openai("gpt-4o-mini"),
         tools: tools,
         maxSteps: 10, // Maximum number of tool invocations per request
-        prompt: prompt,
+        messages: history as Message[],
+        // prompt: prompt,
         onStepFinish: (event) => {
           console.log(event.toolResults);
         },
@@ -82,6 +96,13 @@ const walletClient = new SuiKeyPairWalletClient({
       console.log("RESPONSE");
       console.log("\n-------------------\n");
       console.log(result.text);
+      console.log("FULL response: ", result.response.messages)
+      history.push({role: 'assistant', content: result.text});
+
+      console.log("\n-------------------\n");
+      console.log("HISTORY")
+      console.log("\n-------------------\n");
+      console.log(history);
     } catch (error) {
       console.error(error);
     }
