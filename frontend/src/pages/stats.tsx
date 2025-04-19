@@ -13,10 +13,10 @@ const StatsPage: NextPage = () => {
   );
 
   // Mock data for savings trend (7 rows x 12 columns)
-  const savingsTrend = Array(7)
+  const savingsTrend = Array(4)
     .fill(null)
     .map(() =>
-      Array(12)
+      Array(16)
         .fill(null)
         .map(() => Math.random() > 0.3)
     );

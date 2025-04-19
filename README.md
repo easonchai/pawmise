@@ -1,122 +1,58 @@
-# Pawmise
+# 🐾 Pawmise – Save with Heart, Grow with Magic
 
-## **Product Requirement Document: Pawmise – The Guardian Realm**
+Pawmise is a cozy, mystical savings app where your finances are protected by an emotionally intelligent AI companion — a loyal guardian pet who questions your spending, celebrates your saving, and guides you through a magical journey of financial growth.
 
-### **1. Overview**
+As you save, your **Guardian Realm** comes to life: trees bloom, spirits awaken, and celestial elements appear. Spend impulsively, and your realm gently fades. In urgent moments, you can withdraw everything — but at a cost: your realm freezes in time, and your guardian is lost to the graveyard.
 
-**Pawmise** is a gamified savings application that combines emotional engagement with financial literacy. Users are accompanied by a mystical guardian companion who protects their savings. As users save, their **Guardian Realm** flourishes with enchanting elements; as they spend, the realm gently regresses. The app leverages the capabilities of the **Sui blockchain**, utilizing **Sui Move** for smart contract development and the **GOAT SDK** for AI agent interactions.
-
----
-
-### **2. Core Concept**
-
-Users are assigned a **Guardian Companion**—a mystical creature (starting with a dog)—that safeguards their savings. Interactions with the guardian involve conversational prompts, decisions akin to gameplay, and visual progression within a personalized **Guardian Realm**.
-
-The guardian encourages prudent financial behavior, questioning spending habits and rewarding saving. The **Guardian Realm** evolves based on the user's financial actions, providing a visual and emotional representation of their financial journey.
+> **Save with heart. Spend with purpose. Grow your realm.**
 
 ---
 
-### **3. Key Features**
+## ✨ Features
 
-#### 3.1. **Guardian Companion (AI Agent)**
+### 🐕 AI Guardian Companion
 
-- **Default Character**: Mystical dog (future versions may include cats, owls, etc.)
-- **Personality Traits**: Warm, curious, protective
-- **Interactions**:
-  - Queries spending decisions: “Do you truly need this, or is it a passing desire?”
-  - Provides encouragement for saving
-  - Adjusts demeanor based on user behavior
+- Personalized, conversational AI agent
+- Intercepts spending and asks reflective questions
+- Encourages healthy saving behavior
+- Has moods and reactions based on your actions
 
-#### 3.2. **Saving Mechanics**
+### 🌿 Dynamic Realm Progression
 
-- **Manual Savings**: Users can deposit any amount into their savings
-- **Treat Packs**: Predefined savings amounts presented as treats for the guardian
-  - Small Treat: $5
-  - Medium Treat: $20
-  - Large Treat: $100
+- Realm evolves as you save
+- Tiered growth visuals based on % of savings goal
+- Realm never “dies,” but dims or flourishes with your choices
 
-#### 3.3. **Spending Requests**
+### 💖 Guardian Mood System
 
-- **Guardian Interaction**: Upon withdrawal requests, the guardian engages the user in a dialogue to assess necessity
-- **Approval Criteria**:
-  - Amount requested relative to total savings
-  - User's saving and spending history
-- **Outcomes**:
-  - Approved: Funds released, minor regression in realm
-  - Delayed: Encourages user to reconsider
-  - Denied: Suggests alternative actions
+- 3-heart mood meter reflects trust and bond
+- Hearts refresh daily and are impacted by your actions
+- Tapping hearts opens a memory log or guardian journal
 
-#### 3.4. **Emergency Withdrawal ("Kill Switch")**
+### 💬 RPG-Style Chat Interface
 
-- **Function**: Immediate access to all funds
-- **Consequence**: Permanent loss of current guardian and realm progress
-- **Restart**: User begins anew with a fresh guardian and realm
+- Tap-to-reply chat UI with immersive prompts
+- Guardian speaks in soft, mystical tones
+- Everything is abstracted behind emotional interaction
 
-#### 3.5. **Guardian Realm (Visual Growth)**
+### 🧠 Intelligent Financial Layer
 
-- **Concept**: A mystical realm that evolves with the user's savings
-- **Progression Tiers**:
+- AI evaluates your requests based on:
+  - Balance
+  - Recent habits
+  - Size of transaction
+- Can rebalance, optimize yield, and act on your behalf
+- All decisions are framed narratively, not technically
 
-| Tier | Savings Range   | Realm Features                           |
-| ---- | --------------- | ---------------------------------------- |
-| 1    | $0 - $99        | Sparkling Clearing                       |
-| 2    | $100 - $499     | Moonlit Grove with flora                 |
-| 3    | $500 - $999     | Emergent Shrine and fauna                |
-| 4    | $1,000 - $4,999 | Spirit Tree and ambient elements         |
-| 5    | $5,000+         | Crystalline Forest with magical entities |
+### 🛡️ Emergency Withdrawal
 
-- **Regression**: As savings decrease, realm elements gently fade or become dormant
-
-#### 3.6. **Monthly Reflection**
-
-- **Features**:
-  - Visual snapshot of the realm
-  - Guardian's message summarizing the month's financial behavior
-  - Breakdown of savings and spending
-  - Encouragement and tips for the upcoming month
+- Withdraw all funds at any time
+- Consequence: realm freezes, guardian lost, journey restarts
 
 ---
 
-### **4. Technical Architecture**
+## 🧱 Built On
 
-#### 4.1. **Blockchain Integration**
-
-- **Platform**: Sui blockchain
-- **Smart Contracts**: Developed using Sui Move
-  - Utilizes Sui's object-centric model for managing user assets and realm elements
-  - Employs capabilities for fine-grained access control
-
-#### 4.2. **AI Agent Integration**
-
-- **Toolkit**: GOAT SDK
-  - Enables AI agents to manage financial transactions
-  - Facilitates conversational interactions with users
-  - Supports integration with various agent frameworks
-
-#### 4.3. **Frontend Development**
-
-- **Design Aesthetic**: Inspired by _Stardew Valley_ and _Studio Ghibli_
-- **Technologies**: React Native or Flutter for cross-platform compatibility
-- **Features**:
-  - Interactive realm visualization
-  - Chat interface for guardian interactions
-  - Dashboard displaying financial statistics and realm status
-
----
-
-### **5. Future Enhancements**
-
-- **Additional Guardian Types**: Introduce new mystical creatures with unique personalities
-- **Realm Customization**: Allow users to personalize their realm's appearance
-- **Community Features**: Enable users to visit and interact with friends' realms
-- **Seasonal Events**: Introduce limited-time events and challenges
-- **Educational Content**: Provide financial literacy resources and mini-games
-
----
-
-### **6. Goals & Impact**
-
-- **Behavioral Change**: Encourage users to develop and maintain healthy saving habits
-- **Emotional Engagement**: Foster a bond between users and their guardians to reinforce financial responsibility
-- **Financial Literacy**: Educate users through interactive and immersive experiences
-- **User Retention**: Utilize gamification and personalization to maintain user interest and commitment
+- **🧩 Blockchain:** [Sui](https://sui.io/) – object-based, performant, and expressive
+- **⚙️ Smart Contracts:** Sui Move
+- **💬 AI & Agent Logic:** GPT-4o + GOAT SDK
