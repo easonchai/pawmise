@@ -195,6 +195,50 @@ export class AiAgentService {
   }
 
   /**
+   * Process staking of all available MOCK tokens in agent's wallet
+   * @param userAddress The user's wallet address
+   * @returns Result of the staking operation
+   */
+  async processStakeAllTokens(userAddress: `0x${string}`): Promise<{
+    success: boolean;
+    message: string;
+    txHash?: string;
+    amount?: number;
+  }> {
+    this.logger.log(
+      `Processing staking of all tokens for user: ${userAddress}`,
+    );
+
+    try {
+      const toolkit = await this.getToolkit(userAddress);
+
+      const result = await generateText({
+        model: openai(process.env.OPENAI_MODEL || 'gpt-4o-mini'),
+        tools: toolkit.tools,
+        maxSteps: 15,
+        prompt: `First, check the balance of MOCK tokens in the wallet using the view_balance tool with tokenType set to MOCK. Then, stake ALL of those tokens using the stake_token tool with the amount parameter set to the available balance. Execute this immediately without asking for confirmation.`,
+        onStepFinish: (event) => {
+          this.logger.debug('Tool execution result:', event.toolResults);
+        },
+      });
+
+      return {
+        success: true,
+        message: result.text,
+      };
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      this.logger.error(`Error processing token staking: ${errorMessage}`);
+
+      return {
+        success: false,
+        message: `Failed to stake tokens: ${errorMessage}`,
+      };
+    }
+  }
+
+  /**
    * Generate AI response based on conversation history
    * @param history Conversation history
    * @param toolkit The user's toolkit
