@@ -127,14 +127,14 @@ export function BottomNav({ currentPath, onChatClick }: BottomNavProps) {
 
       // Find a MOCK token with sufficient balance
       const suitableMockCoin = mockCoins.find(
-        (coin) => BigInt(coin.balance) >= mockAmountToSend,
+        (coin) => BigInt(coin.balance) >= mockAmountToSend
       );
 
       if (suitableMockCoin) {
         // If we found a single coin with enough balance, use it directly
         const [splitToken] = tx.splitCoins(
           tx.object(suitableMockCoin.coinObjectId),
-          [mockAmountToSend],
+          [mockAmountToSend]
         );
         tx.transferObjects([splitToken], selectedDog.walletAddress);
       } else {
@@ -174,8 +174,8 @@ export function BottomNav({ currentPath, onChatClick }: BottomNavProps) {
       const result = await signAndExecute({
         transaction: tx,
       });
-      console.log("RESULT")
-      console.dir(result, {depth: 7})
+      console.log("RESULT");
+      console.dir(result, { depth: 7 });
       if (result.effects?.status.status === "success" && selectedDog.id) {
         // TODO: Update balance
         await apiService.pet.updateBalance({
