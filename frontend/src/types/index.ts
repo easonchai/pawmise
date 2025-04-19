@@ -10,6 +10,7 @@ export interface GuardianAngel {
   name: string;
   type: string;
   image: string;
+  walletAddress: string;
 }
 
 export interface ChatMessage {

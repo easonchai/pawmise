@@ -13,39 +13,188 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { useDisconnectWallet } from "@mysten/dapp-kit";
+import {
+  useCurrentAccount,
+  useDisconnectWallet,
+  useSignAndExecuteTransaction,
+  useSuiClient,
+} from "@mysten/dapp-kit";
 import { useAppStore } from "@/store";
+import { Transaction } from "@mysten/sui/transactions";
+import { SuiClient } from "@mysten/sui/client";
 
 interface BottomNavProps {
   currentPath: string;
   onChatClick?: () => void;
 }
+const MOCK_TOKEN_TYPE =
+  "0x3ba99780cae8374577a0ad2e128bdb5b6cda3574439fee8288295e0719127084::mock_token::MOCK_TOKEN";
+const SUI_TOKEN_TYPE = "0x2::sui::SUI";
+
+// async function getCoinsOfType(
+//   client: SuiClient,
+//   coinType: string,
+//   address: string,
+// ) {
+//   // Query for all coins of the specified type owned by this address
+//   const coinsResponse = await client.getCoins({
+//     owner: address,
+//     coinType,
+//   });
+//
+//   return coinsResponse.data;
+// }
+//
+// async function getTokenBalance(
+//   client: SuiClient,
+//   coinType: string,
+//   address: string,
+// ) {
+//   const coins = await getCoinsOfType(client, coinType, address);
+//
+//   let totalBalance = 0;
+//   for (const coin of coins) {
+//     totalBalance += Number(coin.balance);
+//   }
+//
+//   return totalBalance;
+// }
 
 export function BottomNav({ currentPath, onChatClick }: BottomNavProps) {
   const router = useRouter();
+  const currentAccount = useCurrentAccount();
   const { mutate: disconnect } = useDisconnectWallet();
   const { logout } = useAppStore();
   const [emergencyOpen, setEmergencyOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const { guardianAngel } = useAppStore();
+  const suiClient = useSuiClient();
+  const [isProcessing, setIsProcessing] = useState(false);
+  const { mutateAsync: signAndExecute } = useSignAndExecuteTransaction({
+    execute: async ({ bytes, signature }) =>
+      await suiClient.executeTransactionBlock({
+        transactionBlock: bytes,
+        signature,
+        options: {
+          // Raw effects are required so the effects can be reported back to the wallet
+          showRawEffects: true,
+          // Select additional data to return
+          showObjectChanges: true,
+        },
+      }),
+  });
+
+  // Handle sending tokens to guardian
+  const handleGivingTreats = async (amount: number) => {
+    if (isProcessing) {
+      return;
+    }
+
+    if (!guardianAngel?.walletAddress) {
+      console.error("No guardian wallet address found");
+      return;
+    }
+
+    if (!currentAccount?.address) {
+      console.error("Please connect your wallet first");
+      return;
+    }
+
+    setIsProcessing(true);
+
+    try {
+      // Create a new transaction
+      const tx = new Transaction();
+      
+      // Convert amount to MIST (9 decimals for MOCK token)
+      const mockAmountToSend = BigInt(amount * 1e9);
+      // Send 0.5 SUI per transaction
+      const suiAmountToSend = BigInt(5 * 1e8);
+      
+      // Get MOCK tokens from wallet
+      const mockCoinsResponse = await suiClient.getCoins({
+        owner: currentAccount.address,
+        coinType: MOCK_TOKEN_TYPE
+      });
+      
+      const mockCoins = mockCoinsResponse.data;
+      
+      if (!mockCoins || mockCoins.length === 0) {
+        setIsProcessing(false);
+        return;
+      }
+      
+      // Find a MOCK token with sufficient balance
+      const suitableMockCoin = mockCoins.find(
+        coin => BigInt(coin.balance) >= mockAmountToSend
+      );
+      
+      if (suitableMockCoin) {
+        // If we found a single coin with enough balance, use it directly
+        const [splitToken] = tx.splitCoins(
+          tx.object(suitableMockCoin.coinObjectId),
+          [mockAmountToSend]
+        );
+        tx.transferObjects([splitToken], guardianAngel.walletAddress);
+      } else {
+        // If no single coin has enough, merge coins until we have enough
+        let totalBalance = BigInt(0);
+        const tokensToUse = [];
+        
+        // Find coins to merge until we have enough balance
+        for (const coin of mockCoins) {
+          totalBalance += BigInt(coin.balance);
+          tokensToUse.push(coin.coinObjectId);
+          
+          if (totalBalance >= mockAmountToSend) break;
+        }
+        
+        if (totalBalance < mockAmountToSend) {
+          setIsProcessing(false);
+          return;
+        }
+        
+        // Merge coins and split the amount
+        const primaryToken = tx.object(tokensToUse[0]);
+        if (tokensToUse.length > 1) {
+          const otherTokens = tokensToUse.slice(1).map(id => tx.object(id));
+          tx.mergeCoins(primaryToken, otherTokens);
+        }
+        
+        const [splitToken] = tx.splitCoins(primaryToken, [mockAmountToSend]);
+        tx.transferObjects([splitToken], guardianAngel.walletAddress);
+      }
+      
+      // Add SUI transfer - we'll use the gas coin directly for simplicity
+      const [suiSplitCoin] = tx.splitCoins(tx.gas, [suiAmountToSend]);
+      tx.transferObjects([suiSplitCoin], guardianAngel.walletAddress);
+      
+      // Execute the transaction
+      const result = await signAndExecute({
+        transaction: tx,
+      });
+      
+      console.log("Transaction successful!", result.digest);
+      
+    } catch (error) {
+      console.error("Transaction failed:", error);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
 
   const fabOptions = [
     {
       amount: 1,
-      onClick: (amount: number) => {
-        console.log(`Giving ${amount} treats`);
-      },
+      onClick: (amount: number) => handleGivingTreats(amount),
     },
     {
       amount: 5,
-      onClick: (amount: number) => {
-        console.log(`Giving ${amount} treats`);
-      },
+      onClick: (amount: number) => handleGivingTreats(amount),
     },
     {
       amount: 50,
-      onClick: (amount: number) => {
-        console.log(`Giving ${amount} treats`);
-      },
+      onClick: (amount: number) => handleGivingTreats(amount),
     },
   ];
 
@@ -55,7 +204,6 @@ export function BottomNav({ currentPath, onChatClick }: BottomNavProps) {
     setSettingsOpen(false);
     router.push("/");
   };
-
   return (
     <>
       <nav className="fixed bottom-0 left-0 right-0 flex justify-between items-center bg-[#F6D998] py-4 px-6 border-t-2 border-[#392E1F]">
