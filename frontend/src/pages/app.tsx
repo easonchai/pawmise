@@ -1,65 +1,21 @@
 import { NextPage } from "next";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { RadialFab } from "@/components/ui/radial-fab";
-import { Camera, Edit, Settings } from "lucide-react";
 import { EmergencyDialog } from "@/components/ui/emergency-dialog";
 import { useState } from "react";
 import { useRouter } from "next/router";
-
-interface RealmStatus {
-  status: string;
-  hearts: number;
-  maxHearts: number;
-  savingsGoal: number;
-  savingsAchieved: number;
-}
+import { useAppStore } from "@/store";
+import { BottomNav } from "@/components/bottom-nav";
 
 const AppPage: NextPage = () => {
   const router = useRouter();
+  const { realm, selectedDog } = useAppStore();
   const [emergencyOpen, setEmergencyOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
-  const realmStatus: RealmStatus = {
-    status: "Flourishing",
-    hearts: 2,
-    maxHearts: 3,
-    savingsGoal: 25000,
-    savingsAchieved: 20000,
-  };
-
-  const fabOptions = [
-    {
-      icon: <Camera className="h-5 w-5" />,
-      label: "Take Photo",
-      onClick: () =>
-        console.log({
-          title: "Camera",
-          description: "Camera option clicked",
-        }),
-      color: "bg-blue-500 text-white",
-    },
-    {
-      icon: <Edit className="h-5 w-5" />,
-      label: "Edit",
-      onClick: () =>
-        console.log({
-          title: "Edit",
-          description: "Edit option clicked",
-        }),
-      color: "bg-green-500 text-white",
-    },
-    {
-      icon: <Settings className="h-5 w-5" />,
-      label: "Settings",
-      onClick: () =>
-        console.log({
-          title: "Settings",
-          description: "Settings option clicked",
-        }),
-      color: "bg-purple-500 text-white",
-    },
-  ];
+  const savingsPercentage = Math.round(
+    (realm.savingsAchieved / realm.savingsGoal) * 100
+  );
 
   return (
     <>
@@ -71,7 +27,7 @@ const AppPage: NextPage = () => {
             <div className="flex items-center gap-2">
               <div className="w-10 h-10 rounded-full overflow-hidden relative">
                 <Image
-                  src="/icons/realm.png"
+                  src={`/icons/realm.png`}
                   alt="Realm Icon"
                   fill
                   className="object-cover"
@@ -80,18 +36,18 @@ const AppPage: NextPage = () => {
               <div>
                 <p className="text-base leading-tight">Realm Status</p>
                 <p className="text-lg font-medium leading-tight">
-                  {realmStatus.status}
+                  {realm.status}
                 </p>
               </div>
             </div>
 
             {/* Hearts - Right */}
             <div className="flex gap-1 h-full items-center justify-center">
-              {Array.from({ length: realmStatus.maxHearts }).map((_, i) => (
+              {Array.from({ length: realm.maxHearts }).map((_, i) => (
                 <Image
                   key={i}
                   src={
-                    i < realmStatus.hearts
+                    i < realm.hearts
                       ? "/icons/heart_filled.png"
                       : "/icons/heart_empty.png"
                   }
@@ -107,26 +63,18 @@ const AppPage: NextPage = () => {
           <div className="mt-8 w-full max-w-md mx-auto">
             <div className="flex justify-between items-center mb-1">
               <p className="text-base">Savings Goal</p>
-              <p className="text-base">
-                ${realmStatus.savingsGoal.toLocaleString()}
-              </p>
+              <p className="text-base">${realm.savingsGoal.toLocaleString()}</p>
             </div>
             <div className="h-3 w-full rounded-full bg-[#392E1F]/20 overflow-hidden border-2 border-[#392E1F]">
               <div
                 className="h-full bg-[#4CAF50] transition-all"
                 style={{
-                  width: `${
-                    (realmStatus.savingsAchieved / realmStatus.savingsGoal) *
-                    100
-                  }%`,
+                  width: `${savingsPercentage}%`,
                 }}
               />
             </div>
             <p className="text-sm mt-1 text-center">
-              {Math.round(
-                (realmStatus.savingsAchieved / realmStatus.savingsGoal) * 100
-              )}
-              % of goal achieved
+              {savingsPercentage}% of goal achieved
             </p>
           </div>
 
@@ -145,11 +93,11 @@ const AppPage: NextPage = () => {
 
           {/* Pet Display */}
           <div className="flex-1 flex flex-col items-center justify-end transform translate-y-56">
-            <p className="my-2 text-2xl">Luna</p>
+            <p className="my-2 text-2xl">{selectedDog?.name || "Luna"}</p>
             <div className="relative w-48 h-48">
               <Image
-                src="/dogs/pom.png"
-                alt="Luna"
+                src={selectedDog?.image || "/dogs/pom.png"}
+                alt={selectedDog?.name || "Guardian Angel"}
                 fill
                 className="object-contain"
               />
@@ -164,70 +112,7 @@ const AppPage: NextPage = () => {
           </div> */}
 
           {/* Navigation */}
-          <nav className="fixed bottom-0 left-0 right-0 flex justify-between items-center bg-[#F6D998] py-4 px-6 border-t-2 border-[#392E1F]">
-            <div className="flex-1 flex flex-col items-center justify-center">
-              <Image
-                src="/icons/chat.png"
-                alt="Chat"
-                width={24}
-                height={24}
-                className="opacity-50"
-              />
-              <p className="text-[#392E1F] text-sm">Chat</p>
-            </div>
-            <div className="flex-1 flex flex-col items-center justify-center">
-              <Image
-                src="/icons/wallet.png"
-                alt="Wallet"
-                width={24}
-                height={24}
-                className="opacity-50"
-              />
-              <p className="text-[#392E1F] text-sm">Stats</p>
-            </div>
-
-            <div className="flex-1 flex justify-center -mt-16">
-              <RadialFab
-                options={fabOptions}
-                icon={
-                  <Image
-                    src="/icons/treat.png"
-                    alt="Bone"
-                    width={32}
-                    height={32}
-                  />
-                }
-                buttonClassName="bg-[#392E1F] border-0"
-              />
-            </div>
-
-            <div
-              className="flex-1 flex flex-col items-center justify-center cursor-pointer"
-              onClick={() => setEmergencyOpen(true)}
-            >
-              <Image
-                src="/icons/siren.png"
-                alt="Emergency"
-                width={24}
-                height={24}
-                className="opacity-50"
-              />
-              <p className="text-[#392E1F] text-sm">Emergency</p>
-            </div>
-            <div
-              className="flex-1 flex flex-col items-center justify-center cursor-pointer"
-              onClick={() => setSettingsOpen(true)}
-            >
-              <Image
-                src="/icons/settings.png"
-                alt="Settings"
-                width={24}
-                height={24}
-                className="opacity-50"
-              />
-              <p className="text-[#392E1F] text-sm">Settings</p>
-            </div>
-          </nav>
+          <BottomNav currentPath={router.pathname} />
         </div>
 
         {/* Dialogs */}

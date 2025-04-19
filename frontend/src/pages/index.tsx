@@ -1,17 +1,16 @@
 import { useEffect } from "react";
 import { useRouter } from "next/router";
-import { ConnectButton, useWallets } from "@mysten/dapp-kit";
+import { ConnectButton, useAccounts } from "@mysten/dapp-kit";
 import { useAppStore } from "@/store";
 
 export default function Home() {
   const router = useRouter();
-  const wallets = useWallets();
-  const activeWallet = wallets[0];
+  const accounts = useAccounts();
   const { setWalletAddress, isOnboarded } = useAppStore();
 
   useEffect(() => {
-    if (activeWallet?.accounts[0]) {
-      setWalletAddress(activeWallet.accounts[0].address);
+    if (accounts && accounts.length > 0) {
+      setWalletAddress(accounts[0].address);
 
       // TODO: Replace with actual API call
       if (isOnboarded) {
@@ -20,7 +19,7 @@ export default function Home() {
         router.push("/onboarding");
       }
     }
-  }, [activeWallet, router, setWalletAddress, isOnboarded]);
+  }, [accounts, router, setWalletAddress, isOnboarded]);
 
   return (
     <div className="font-patrick-hand text-[#282424] bg-[url('/backgrounds/bg-primary.png')] bg-cover bg-center min-h-screen py-16 justify-between flex flex-col">
@@ -31,7 +30,7 @@ export default function Home() {
         </p>
       </div>
       <div className="flex w-full items-center justify-center">
-        <ConnectButton className="text-2xl bg-[#F6D998] hover:bg-[#F6D998]/90 text-[#392E1F] border-2 border-[#392E1F] rounded-lg px-4 py-2" />
+        <ConnectButton className="!text-2xl !bg-[#F6D998] hover:!bg-[#F6D998]/90 !text-[#392E1F] !border-2 !border-[#392E1F] !rounded-lg !px-4 !py-2" />
       </div>
     </div>
   );

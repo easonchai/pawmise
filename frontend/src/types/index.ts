@@ -1,6 +1,13 @@
 export interface Dog {
   breed: string;
   name: string;
+  image: string;
+}
+
+export interface GuardianAngel {
+  name: string;
+  type: string;
+  image: string;
 }
 
 export interface UserState {
@@ -9,6 +16,7 @@ export interface UserState {
   selectedDog: Dog | null;
   userName: string;
   isOnboarded: boolean;
+  guardianAngel: GuardianAngel;
 }
 
 export interface RealmState {
@@ -17,6 +25,7 @@ export interface RealmState {
   maxHearts: number;
   savingsGoal: number;
   savingsAchieved: number;
+  tier: number;
 }
 
 export interface AppState extends UserState {

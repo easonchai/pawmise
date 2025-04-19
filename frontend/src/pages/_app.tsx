@@ -1,4 +1,5 @@
 import "@/styles/globals.css";
+import "@mysten/dapp-kit/dist/index.css";
 import type { AppProps } from "next/app";
 import { SuiClientProvider, WalletProvider } from "@mysten/dapp-kit";
 import { getFullnodeUrl } from "@mysten/sui/client";
