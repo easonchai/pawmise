@@ -1,3 +1,5 @@
+"use client";
+
 import { NextPage } from "next";
 import Image from "next/image";
 import { useRouter } from "next/router";
@@ -20,16 +22,19 @@ interface Message {
 let messageIdCounter = 0;
 const generateMessageId = () => `msg_${++messageIdCounter}`;
 
+const getTierFromAmount = (amount: number): number => {
+  if (amount < 100) return 1;
+  if (amount < 500) return 2;
+  if (amount < 1000) return 3;
+  if (amount < 5000) return 4;
+  if (amount < 10000) return 5;
+  return 6;
+};
+
 const AppPage: NextPage = () => {
   const router = useRouter();
-  const {
-    realm,
-    selectedDog,
-    userName,
-    updateRealmStatus,
-    setSelectedDog,
-    setGuardianAngel,
-  } = useAppStore();
+  const { realm, selectedDog, userName, updateRealmStatus, setSelectedDog } =
+    useAppStore();
   const [isChatActive, setIsChatActive] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -38,9 +43,10 @@ const AppPage: NextPage = () => {
   const isInitializedRef = useRef(false);
   const account = useCurrentAccount();
   const [isDataLoading, setIsDataLoading] = useState(true);
+  const [isPetActive, setIsPetActive] = useState(true);
 
   const savingsPercentage = Math.round(
-    (realm.savingsAchieved / realm.savingsGoal) * 100,
+    (realm.savingsAchieved / realm.savingsGoal) * 100
   );
 
   useEffect(() => {
@@ -65,13 +71,15 @@ const AppPage: NextPage = () => {
             console.log("Savings goal ($):", savingsGoal);
 
             try {
-              const petResponse = await apiService.pet.getActivePetByUserId(
-                userData.id,
+              const petResponse = await apiService.pet.getPetByUserId(
+                userData.id
               );
               const petData = petResponse.data;
 
               if (petData) {
-                console.log("Active pet data:", petData);
+                console.log("Pet data:", petData);
+
+                setIsPetActive(petData.active);
 
                 const savingsAchieved =
                   parseFloat(petData.balance) / 1000000000;
@@ -79,33 +87,52 @@ const AppPage: NextPage = () => {
                 console.log("Converted savings achieved ($):", savingsAchieved);
                 console.log(
                   "Calculated percentage:",
-                  (savingsAchieved / savingsGoal) * 100,
+                  (savingsAchieved / savingsGoal) * 100
                 );
 
                 // Calculate realm status
                 const realmStatus = calculateRealmStatus(
                   savingsAchieved,
-                  savingsGoal,
+                  savingsGoal
                 );
+                const tier = getTierFromAmount(savingsAchieved);
 
                 // Update realm status in store
                 updateRealmStatus({
                   savingsGoal,
                   savingsAchieved,
                   status: realmStatus,
+                  tier,
                 });
 
                 // Update selected dog in store with accurate data
+                // Always use the pet's breed and image, just change the name if inactive
                 setSelectedDog({
                   id: petData.id,
                   breed: petData.breed.toLowerCase(),
-                  name: petData.name,
+                  name: petData.active ? petData.name : "IMMORTALIZED",
                   image: `/dogs/${petData.breed.toLowerCase()}.png`,
                   walletAddress: petData.walletAddress,
                 });
+              } else {
+                console.log("No pet found for this user");
+                setIsPetActive(false);
+                setSelectedDog({
+                  id: "immortalized",
+                  breed: "pom",
+                  name: "IMMORTALIZED",
+                  image: "/dogs/pom.png",
+                });
               }
-            } catch (petError) {
-              console.error("Failed to fetch active pet data:", petError);
+            } catch (error) {
+              console.error("Failed to fetch pet data:", error);
+              setIsPetActive(false);
+              setSelectedDog({
+                id: "immortalized",
+                breed: "pom",
+                name: "IMMORTALIZED",
+                image: "/dogs/pom.png",
+              });
             }
           }
         } catch (error) {
@@ -115,7 +142,6 @@ const AppPage: NextPage = () => {
         }
       }
     };
-
     fetchUserAndPetData();
   }, [account, updateRealmStatus, setSelectedDog]);
 
@@ -139,7 +165,7 @@ const AppPage: NextPage = () => {
             id: generateMessageId(),
             content: his.content,
             isUser: his.role === "user",
-          }),
+          })
         );
         if (processedHistory.length === 0) {
           setMessages([
@@ -157,16 +183,6 @@ const AppPage: NextPage = () => {
       }
     };
     fetchChatMessages();
-    // if (isChatActive && messages.length === 0 && !isInitializedRef.current) {
-    //   isInitializedRef.current = true;
-    //   setMessages([
-    //     {
-    //       id: generateMessageId(),
-    //       content: `Woof woof! Hi ${userName}! How are ya?`,
-    //       isUser: false,
-    //     },
-    //   ]);
-    // }
   }, [isChatActive, messages.length, userName, account]);
 
   const handleSendMessage = async (content: string) => {
@@ -185,20 +201,6 @@ const AppPage: NextPage = () => {
     setIsTyping(true);
 
     try {
-      // Simulate API delay
-      // await new Promise((resolve) => setTimeout(resolve, 1500));
-      // TODO: Replace with actual API call
-      // const response = await fetch("/api/chat", {
-      //   method: "POST",
-      //   headers: {
-      //     "Content-Type": "application/json",
-      //   },
-      //   body: JSON.stringify({
-      //     message: content,
-      //     dogName: selectedDog?.name,
-      //   }),
-      // });
-
       const response = await apiService.ai.chat(account?.address, {
         message: content,
       });
@@ -220,8 +222,14 @@ const AppPage: NextPage = () => {
     }
   };
 
+  // Apply grayscale class to the entire container if pet is inactive
+  const containerClasses = cn(
+    "min-h-screen w-full bg-[url('/backgrounds/bg-primary.png')] bg-cover bg-center font-patrick-hand text-[#392E1F] relative",
+    !isPetActive && "grayscale"
+  );
+
   return (
-    <div className="min-h-screen w-full bg-[url('/backgrounds/bg-primary.png')] bg-cover bg-center font-patrick-hand text-[#392E1F] relative">
+    <div className={containerClasses}>
       <div className="flex flex-col h-screen">
         {/* Main App View - Always Visible */}
         <div className="flex flex-col p-4">
@@ -305,7 +313,7 @@ const AppPage: NextPage = () => {
           <div
             className={cn(
               "flex-1 flex flex-col items-center justify-end transform",
-              isChatActive ? "translate-y-8" : "translate-y-56",
+              isChatActive ? "translate-y-8" : "translate-y-56"
             )}
           >
             {isChatActive ? (

@@ -207,20 +207,24 @@ export function BottomNav({ currentPath, onChatClick }: BottomNavProps) {
   const handleEmergencyWithdrawal = async () => {
     console.log("Emergency withdrawal initiated");
 
-    if (currentAccount) {
-      try {
-        const response = await apiService.ai.emergencyWithdrawal(
-          currentAccount.address
-        );
-        console.log("Emergency withdrawal result:", response);
-      } catch (error) {
-        console.error("Emergency withdrawal failed:", error);
-      }
-    } else {
+    if (!currentAccount) {
       console.error("No wallet connected for emergency withdrawal");
+      setEmergencyOpen(false);
+      return;
     }
 
-    setEmergencyOpen(false);
+    try {
+      const response = await apiService.ai.emergencyWithdrawal(
+        currentAccount.address
+      );
+      console.log("Emergency withdrawal result:", response);
+
+      setEmergencyOpen(false);
+
+      router.reload();
+    } catch (error) {
+      console.error("Emergency withdrawal failed:", error);
+    }
   };
 
   const fabOptions = [

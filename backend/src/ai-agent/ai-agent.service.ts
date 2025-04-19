@@ -171,12 +171,14 @@ export class AiAgentService {
       const result = await generateText({
         model: openai(process.env.OPENAI_MODEL || 'gpt-4o-mini'),
         tools: toolkit.tools,
-        maxSteps: 10,
-        prompt: `EMERGENCY WITHDRAWAL: The user has requested an emergency withdrawal. Please redeem ALL tokens from the staking contract using the redeem_token tool. The pet's current balance is ${pet.balance}. This is an emergency, so execute this immediately without asking for confirmation.`,
+        maxSteps: 15, // Slightly increased to allow for both operations
+        prompt: `EMERGENCY WITHDRAWAL: The user has requested an emergency withdrawal. Please redeem ALL tokens from the staking contract using the redeem_token tool. Then, transfer ALL USDC tokens in the wallet to the user's address (${userAddress}) using the send_tokens tool. The pet's current balance is ${pet.balance}. This is an emergency, so execute this immediately without asking for confirmation.`,
         onStepFinish: (event) => {
           this.logger.debug('Tool execution result:', event.toolResults);
         },
       });
+
+      await this.petService.updatePetActive(pet.id, false);
 
       return {
         success: true,
@@ -218,7 +220,24 @@ export class AiAgentService {
         model: openai(process.env.OPENAI_MODEL || 'gpt-4o-mini'),
         tools: toolkit.tools,
         maxSteps: 15,
-        prompt: `First, check the balance of USDC tokens in the wallet using the view_balance tool with tokenType set to USDC. Then, stake half of those tokens using the stake_token tool with the amount parameter set to the available balance. Execute this immediately without asking for confirmation.`,
+        prompt: `I need you to stake half of the USDC tokens in the lending market. Follow these steps precisely:
+
+        1. First, check the balance of USDC tokens in the wallet using view_balance with tokenType USDC.
+
+        2. IMPORTANT: The balance will be reported in base units with 9 decimals (e.g., 199999999875). You must:
+           a) DIVIDE this number by 1,000,000,000 (1e9) to get the human‐readable balance.
+           b) THEN DIVIDE that human‐readable balance by 2 to obtain the amount to stake.
+
+        3. For example, if the raw balance is 199999999875:
+           - 199999999875 ÷ 1e9 = 199.999999875
+           - 199.999999875 ÷ 2 = 99.9999999375
+           You should call stake_token with amount = 99.9999999375
+
+        4. Use the stake_token tool with this half‑balance amount.
+
+        5. Confirm the staking was successful and report how many tokens were staked.
+
+        Execute these steps immediately without asking for confirmation.`,
         onStepFinish: (event) => {
           this.logger.debug('Tool execution result:', event.toolResults);
         },
