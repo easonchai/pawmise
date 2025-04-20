@@ -58,7 +58,7 @@ As you save, your **Guardian Realm** comes to life: trees bloom, spirits awaken,
 - **💬 AI & Agent Logic:** GPT-4o + GOAT SDK
 
 ## Folder structure
-
+```
 pawmise/
 ├── ai/           # Test environment for GOAT SDK plugins
 ├── backend/      # NestJS backend server
@@ -66,4 +66,5 @@ pawmise/
 ├── frontend/     # Next.js frontend application
 ├── .gitignore
 └── README.md
+```
 
