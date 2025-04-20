@@ -45,11 +45,11 @@ const redeemParameterSchema = z.object({
   // marketId: z.string().describe("The lending market object ID")
 });
 
-// const checkDepositParameterSchema = z.object({
-//   humanReadable: z.boolean().describe('Returns in a human readable format'),
-//   // address: z.number().describe('The address to check'),
-//   // marketId: z.string().describe("The lending market object ID")
-// });
+const checkDepositParameterSchema = z.object({
+  humanReadable: z.boolean().describe('Returns in a human readable format'),
+  // address: z.number().describe('The address to check'),
+  // marketId: z.string().describe("The lending market object ID")
+});
 
 // Helper function to get coins of a specific type
 async function getCoinsOfType(walletClient: SuiWalletClient, coinType: string) {
@@ -231,67 +231,233 @@ const redeemTokensMethod = async (
   };
 };
 
-// Check deposit method
+// Check deposit method - this uses a dev inspection call to get the deposit amount
 // const checkDepositMethod = async (
 //   walletClient: SuiWalletClient,
 //   parameters: z.infer<typeof checkDepositParameterSchema>,
 // ) => {
-//   const { humanReadable } = parameters;
-//   const tx = new Transaction();
-//   const marketId = lendingMarketId;
+//   const { humanReadable = true } = parameters;
 //   const sender = walletClient.getAddress();
+//
+//   // Create a transaction to inspect
+//   const tx = new Transaction();
 //   tx.setSender(sender);
 //
-//   // Call the get_user_deposit function
+//   // Add the function call to get user deposit
 //   tx.moveCall({
 //     target: `${contractAddress}::lending_market::get_user_deposit`,
 //     typeArguments: [
 //       `${contractAddress}::pawmise::PAWMISE`,
 //       `${contractAddress}::usdc::USDC`,
 //     ],
-//     arguments: [
-//       tx.object(marketId), // lending market
-//       tx.pure.address(sender), // user address
-//     ],
+//     arguments: [tx.object(lendingMarketId), tx.pure.address(sender)],
 //   });
 //
-//   // Build and send the transaction
+//   // Build the transaction
 //   await tx.build({ client: walletClient.getClient() });
-//   const result = await walletClient.sendTransaction({ transaction: tx });
-//   await walletClient.getClient().waitForTransaction({ digest: result.hash });
 //
-//   // Get the transaction effects to extract the return value
-//   const effects = await walletClient.getClient().getTransactionBlock({
-//     digest: result.hash,
-//     options: {
-//       showEffects: true,
-//     },
-//   });
+//   // Execute in dev-inspect mode
+//   const inspectResult = await walletClient
+//     .getClient()
+//     .devInspectTransactionBlock({
+//       sender,
+//       transactionBlock: tx,
+//     });
 //
+//   // Check if the call was successful
 //   if (
-//     !effects.effects ||
-//     !effects.effects.status ||
-//     effects.effects.status.status !== 'success'
+//     !inspectResult ||
+//     !inspectResult.results ||
+//     inspectResult.results.length === 0
 //   ) {
-//     throw new Error('Failed to get deposit amount');
+//     throw new Error('Failed to get deposit information');
 //   }
 //
-//   // Extract the return value from the effects
-//   const returnValue = effects.effects.transactionDigest?.[0]?.[0];
+//   // Parse the returned value (a u64)
+//   const returnValue = inspectResult.results[0]?.returnValues?.[0];
 //   if (!returnValue) {
-//     throw new Error('No return value found');
+//     return {
+//       success: true,
+//       amount: 0,
+//       amountHumanReadable: 0,
+//       marketId: lendingMarketId,
+//     };
 //   }
 //
-//   // Convert the return value to a number
-//   const amount = Number(returnValue);
+//   // The return value is a base64-encoded BCS serialized u64
+//   // Convert it to a number
+//   const valueHex = returnValue[0];
+//   if (!valueHex) {
+//     return {
+//       success: true,
+//       amount: 0,
+//       amountHumanReadable: 0,
+//       marketId: lendingMarketId,
+//     };
+//   }
+//
+//   // Parse the returned value which is a BCS encoded u64
+//   let amount = 0;
+//   try {
+//     // First remove the "0x" prefix if present
+//     const hex = valueHex.startsWith('0x') ? valueHex.slice(2) : valueHex;
+//
+//     // Convert hex string to bytes (little endian format in BCS)
+//     const bytes = new Uint8Array(
+//       hex.match(/.{1,2}/g)?.map((byte) => parseInt(byte, 16)) || [],
+//     );
+//
+//     // Convert bytes to a number (u64 in little endian format)
+//     let value = 0n;
+//     for (let i = 0; i < bytes.length; i++) {
+//       value += BigInt(bytes[i]) << BigInt(8 * i);
+//     }
+//     amount = Number(value);
+//   } catch (e) {
+//     console.error('Error parsing return value:', e);
+//     throw new Error('Failed to parse deposit amount');
+//   }
 //
 //   return {
 //     success: true,
-//     txHash: result.hash,
-//     amount: humanReadable ? amount / 1e9 : amount, // Convert to human readable if requested
-//     marketId: marketId,
+//     amount,
+//     amountHumanReadable: humanReadable ? amount / 1e9 : amount, // Convert to human readable if requested
+//     marketId: lendingMarketId,
 //   };
 // };
+const checkDepositMethod = async (
+  walletClient: SuiWalletClient,
+  parameters: z.infer<typeof checkDepositParameterSchema>,
+) => {
+  const { humanReadable = true } = parameters;
+  const sender = walletClient.getAddress();
+
+  // Create a transaction to inspect
+  const tx = new Transaction();
+  tx.setSender(sender);
+
+  // Add the function call to get user deposit
+  tx.moveCall({
+    target: `${contractAddress}::lending_market::get_user_deposit`,
+    typeArguments: [
+      `${contractAddress}::pawmise::PAWMISE`,
+      `${contractAddress}::usdc::USDC`,
+    ],
+    arguments: [tx.object(lendingMarketId), tx.pure.address(sender)],
+  });
+
+  // Build the transaction
+  await tx.build({ client: walletClient.getClient() });
+
+  // Execute in dev-inspect mode
+  const inspectResult = await walletClient
+    .getClient()
+    .devInspectTransactionBlock({
+      sender,
+      transactionBlock: tx,
+    });
+
+  // Check if the call was successful
+  if (
+    !inspectResult ||
+    !inspectResult.results ||
+    inspectResult.results.length === 0
+  ) {
+    throw new Error('Failed to get deposit information');
+  }
+
+  // The return value is a base64-encoded BCS serialized u64
+  // Convert it to a number
+  // Parse the returned value (a u64)
+  const returnValue = inspectResult.results[0]?.returnValues?.[0];
+  if (!returnValue) {
+    return {
+      success: true,
+      amount: 0,
+      amountHumanReadable: 0,
+      marketId: lendingMarketId,
+    };
+  }
+
+  // Parse the returned value which is a BCS encoded u64
+  let amount = 0;
+  try {
+    // The return value can be in different formats depending on the RPC version
+    // Let's handle both possible formats
+    let hexString = '';
+
+    if (Array.isArray(returnValue)) {
+      // For older RPC versions, it might be an array of values
+      if (
+        returnValue.length > 0 &&
+        returnValue[0] !== null &&
+        returnValue[0] !== undefined
+      ) {
+        hexString = String(returnValue[0]);
+      }
+    } else if (typeof returnValue === 'string') {
+      // For newer RPC versions, it might be a string directly
+      hexString = returnValue;
+    } else if (returnValue && typeof returnValue === 'object') {
+      // It could also be an object with some structure
+      const values = Object.values(returnValue);
+      if (values.length > 0 && values[0] !== null && values[0] !== undefined) {
+        // Make sure we only use stringifiable values
+        const value = values[0];
+        if (
+          typeof value === 'string' ||
+          typeof value === 'number' ||
+          typeof value === 'boolean'
+        ) {
+          hexString = String(value);
+        } else {
+          // Log what we received for debugging
+          console.error('Unexpected return value type:', typeof value);
+          throw new Error('Unexpected return value format from RPC');
+        }
+      }
+    } else if (returnValue !== null && returnValue !== undefined) {
+      // Fallback case for primitive values
+      if (
+        typeof returnValue === 'string' ||
+        typeof returnValue === 'number' ||
+        typeof returnValue === 'boolean'
+      ) {
+        hexString = String(returnValue);
+      } else {
+        console.error('Unexpected return value type:', typeof returnValue);
+        throw new Error('Unexpected return value format from RPC');
+      }
+    }
+
+    // Remove 0x prefix if present
+    if (hexString.startsWith('0x')) {
+      hexString = hexString.slice(2);
+    }
+
+    // Convert hex string to bytes (little endian format in BCS)
+    const bytes = new Uint8Array(
+      hexString.match(/.{1,2}/g)?.map((byte) => parseInt(byte, 16)) || [],
+    );
+
+    // Convert bytes to a number (u64 in little endian format)
+    let value = 0n;
+    for (let i = 0; i < bytes.length; i++) {
+      value += BigInt(bytes[i]) << BigInt(8 * i);
+    }
+    amount = Number(value);
+  } catch (e) {
+    console.error('Error parsing return value:', e);
+    throw new Error('Failed to parse deposit amount');
+  }
+
+  return {
+    success: true,
+    amount,
+    amountHumanReadable: humanReadable ? amount / 1e9 : amount, // Convert to human readable if requested
+    marketId: lendingMarketId,
+  };
+};
 
 export class USDCTokenPlugin extends PluginBase<SuiWalletClient> {
   constructor() {
@@ -334,17 +500,17 @@ export class USDCTokenPlugin extends PluginBase<SuiWalletClient> {
         redeemTokensMethod(walletClient, parameters),
     );
 
-    // const checkDepositTool = createTool(
-    //   {
-    //     name: 'check_deposit',
-    //     description: 'Check the amount of tokens deposited by the user',
-    //     parameters: checkDepositParameterSchema,
-    //   },
-    //   // Implement the method
-    //   (parameters: z.infer<typeof checkDepositParameterSchema>) =>
-    //     checkDepositMethod(walletClient, parameters),
-    // );
+    const checkDepositTool = createTool(
+      {
+        name: 'check_deposit',
+        description: 'Check the amount of tokens deposited by the user',
+        parameters: checkDepositParameterSchema,
+      },
+      // Implement the method
+      (parameters: z.infer<typeof checkDepositParameterSchema>) =>
+        checkDepositMethod(walletClient, parameters),
+    );
 
-    return [mintTokenTool, stakeTokenTool, redeemTokenTool];
+    return [mintTokenTool, stakeTokenTool, redeemTokenTool, checkDepositTool];
   }
 }
