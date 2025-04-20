@@ -56,3 +56,15 @@ As you save, your **Guardian Realm** comes to life: trees bloom, spirits awaken,
 - **🧩 Blockchain:** [Sui](https://sui.io/) – object-based, performant, and expressive
 - **⚙️ Smart Contracts:** Sui Move
 - **💬 AI & Agent Logic:** GPT-4o + GOAT SDK
+
+## Folder structure
+```
+pawmise/
+├── ai/           # Test environment for GOAT SDK plugins
+├── backend/      # NestJS backend server
+├── dapp/         # Sui Move smart contracts
+├── frontend/     # Next.js frontend application
+├── .gitignore
+└── README.md
+```
+
